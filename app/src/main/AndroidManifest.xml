@@ -5,11 +5,8 @@
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.INTERNET" />
-    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-
-    <!-- Opcional en Android 10+ si quieres ubicación en segundo plano -->
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" /> <!-- Opcional en Android 10+ si quieres ubicación en segundo plano -->
     <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
-
 
     <application
         android:allowBackup="true"
@@ -20,8 +17,9 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.AppGestiones">
-
-
+        <activity
+            android:name=".ui.formulario.FormularioActivity"
+            android:exported="false" />
         <activity
             android:name=".ui.home.HomeActivity"
             android:exported="false" />
@@ -38,9 +36,9 @@
             </intent-filter>
         </activity>
 
-        <meta-data android:name="org.osmdroid.config"
-            android:value="true"/>
-
+        <meta-data
+            android:name="org.osmdroid.config"
+            android:value="true" />
     </application>
 
 </manifest>

@@ -1,5 +1,6 @@
 package com.upc.appgestiones.ui.map
 
+import android.content.Intent
 import android.os.Bundle
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
@@ -16,6 +17,7 @@ import com.upc.appgestiones.core.data.model.EstadoOperacion
 import com.upc.appgestiones.core.data.model.Operacion
 import com.upc.appgestiones.core.services.MapService
 import com.upc.appgestiones.core.utils.MapUtil
+import com.upc.appgestiones.ui.formulario.FormularioActivity
 import org.osmdroid.config.Configuration
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory
 import org.osmdroid.util.GeoPoint
@@ -178,9 +180,11 @@ class MapFragment : Fragment() {
                     Toast.makeText(requireContext(), "La operación ${operacion.asunto} está en camino", Toast.LENGTH_SHORT).show()
                     val operacionActualizada = operacion.copy(estado = EstadoOperacion.EN_RUTA)
                     actualizarOperacionEnViewModel(operacionActualizada, mapViewModel)
+                    bottomSheet.dismiss()
                 }
                 EstadoOperacion.EN_RUTA -> {
-                    Toast.makeText(requireContext(), "Gestionando ${operacion.asunto}", Toast.LENGTH_SHORT).show()
+                    val intent = Intent(requireContext(), FormularioActivity::class.java)
+                    startActivity(intent)
                 }
                 else -> {
                     Toast.makeText(requireContext(), "Detalle de ${operacion.asunto}", Toast.LENGTH_SHORT).show()
