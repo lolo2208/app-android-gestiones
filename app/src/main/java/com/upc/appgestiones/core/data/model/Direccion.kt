@@ -7,6 +7,7 @@ data class Direccion(
     val numero: String?,
     val ciudad: String,
     val provincia: String,
+    val referencia: String,
     val latitud: Double?,
     val longitud: Double?
 )

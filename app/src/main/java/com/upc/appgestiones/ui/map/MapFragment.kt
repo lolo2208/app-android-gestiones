@@ -5,7 +5,21 @@ import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Button
+import android.widget.TextView
+import android.widget.Toast
+import androidx.core.content.ContextCompat
+import androidx.fragment.app.activityViewModels
+import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.upc.appgestiones.R
+import com.upc.appgestiones.core.data.model.EstadoOperacion
+import com.upc.appgestiones.core.data.model.Operacion
+import com.upc.appgestiones.core.services.MapService
+import com.upc.appgestiones.core.utils.MapUtil
+import org.osmdroid.config.Configuration
+import org.osmdroid.tileprovider.tilesource.TileSourceFactory
+import org.osmdroid.util.GeoPoint
+import org.osmdroid.views.MapView
 
 // TODO: Rename parameter arguments, choose names that match
 // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
@@ -18,9 +32,14 @@ private const val ARG_PARAM2 = "param2"
  * create an instance of this fragment.
  */
 class MapFragment : Fragment() {
+    private val mapViewModel: MapViewModel by activityViewModels()
+    private var mapView: MapView? = null
+    private var mapService: MapService? = null
+
     // TODO: Rename and change types of parameters
     private var param1: String? = null
     private var param2: String? = null
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -28,6 +47,7 @@ class MapFragment : Fragment() {
             param1 = it.getString(ARG_PARAM1)
             param2 = it.getString(ARG_PARAM2)
         }
+        Configuration.getInstance().userAgentValue = requireContext().packageName
     }
 
     override fun onCreateView(
@@ -36,6 +56,66 @@ class MapFragment : Fragment() {
     ): View? {
         // Inflate the layout for this fragment
         return inflater.inflate(R.layout.fragment_map, container, false)
+    }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+
+        mapView = view.findViewById(R.id.mapView)
+        mapView!!.setTileSource(TileSourceFactory.MAPNIK)
+        mapView!!.setMultiTouchControls(true)
+        mapView!!.controller.setZoom(15.0)
+
+        mapService = MapService(requireContext(), mapView!!)
+
+        // Observa operaciones y crea marcadores
+        mapViewModel.operaciones.observe(viewLifecycleOwner) { lista ->
+            mapService?.addOperacionMarkers(
+                lista,
+                onMarkerClick = { operacion ->
+                    mapView!!.controller.setCenter(GeoPoint(operacion.direccionNavigation.latitud ?: 0.0, operacion.direccionNavigation.longitud ?: 0.0))
+                    showOperacionBottomSheet(operacion)
+                },
+                onGeoClick = { operacion ->
+                    actualizarOperacionEnViewModel(operacion, mapViewModel)
+                }
+            )
+        }
+
+        // Observa ubicación y mueve el mapa
+        mapViewModel.miUbicacion.observe(viewLifecycleOwner) { point ->
+            //mapView!!.controller.setCenter(point)
+        }
+
+        // Obtener ubicación actual
+        mapService?.getCurrentLocation(
+            onSuccess = { geoPoint -> mapViewModel.setUbicacion(geoPoint) },
+            onFailure = { e -> println("Error ubicación: ${e.message}") }
+        )
+
+        // Iniciar actualizaciones en tiempo real
+        mapService?.startLocationUpdates { geoPoint ->
+            mapViewModel.setUbicacion(geoPoint)
+        }
+
+        val btnRuta = view.findViewById<Button>(R.id.btnRuta)
+        btnRuta.setOnClickListener {
+            mapService?.getCurrentLocation(
+                onSuccess = { ubicacionActual ->
+                    val operacionesOrdenadas = MapUtil.ordenarOperacionesPorRuta(
+                        mapViewModel.operaciones.value ?: emptyList(),
+                        ubicacionActual
+                    )
+                    mapViewModel.setOperaciones(operacionesOrdenadas)
+
+                    mapService?.drawRutaOptimaConExtremos(operacionesOrdenadas)
+                },
+                onFailure = { e ->
+                    Toast.makeText(context, "No se pudo obtener la ubicación: ${e.message}", Toast.LENGTH_SHORT).show()
+                }
+            )
+        }
+
     }
 
     companion object {
@@ -56,5 +136,87 @@ class MapFragment : Fragment() {
                     putString(ARG_PARAM2, param2)
                 }
             }
+    }
+
+    private fun showOperacionBottomSheet(operacion: Operacion) {
+        val bottomSheet = BottomSheetDialog(requireContext())
+        val view = layoutInflater.inflate(R.layout.bottom_sheet_operacion, null)
+
+        val txtAsunto = view.findViewById<TextView>(R.id.txtAsunto)
+        val txtCliente = view.findViewById<TextView>(R.id.txtCliente)
+        val txtDireccion = view.findViewById<TextView>(R.id.txtDireccion)
+        val txtUbigeo = view.findViewById<TextView>(R.id.txtUbigeo)
+        val txtReferencia = view.findViewById<TextView>(R.id.txtReferencia)
+        val btnAccion = view.findViewById<Button>(R.id.btnAccion)
+        val btnGeo = view.findViewById<Button>(R.id.btnGeolocalizar)
+
+        txtAsunto.text = operacion.asunto
+        txtCliente.text = "${operacion.clienteNavigation.nombres} ${operacion.clienteNavigation.apellidos}"
+        txtDireccion.text = "${operacion.direccionNavigation.calle} ${operacion.direccionNavigation.numero}"
+        txtUbigeo.text = "${operacion.direccionNavigation.ciudad}, ${operacion.direccionNavigation.provincia}"
+        txtReferencia.text = operacion.direccionNavigation.referencia ?: "Sin referencia"
+
+        // Cambiar texto y color según el estado de la operación
+        when (operacion.estado) {
+            EstadoOperacion.PENDIENTE -> {
+                btnAccion.text = "EN CAMINO"
+                btnAccion.setBackgroundColor(ContextCompat.getColor(requireContext(), R.color.custom_orange))
+            }
+            EstadoOperacion.EN_RUTA -> {
+                btnAccion.text = "GESTIONAR"
+                btnAccion.setBackgroundColor(ContextCompat.getColor(requireContext(), R.color.custom_green))
+            }
+            else -> {
+                btnAccion.text = "Ver detalle"
+                btnAccion.setBackgroundColor(ContextCompat.getColor(requireContext(), R.color.custom_primary))
+            }
+        }
+
+        btnAccion.setOnClickListener {
+            when (operacion.estado) {
+                EstadoOperacion.PENDIENTE -> {
+                    Toast.makeText(requireContext(), "La operación ${operacion.asunto} está en camino", Toast.LENGTH_SHORT).show()
+                    val operacionActualizada = operacion.copy(estado = EstadoOperacion.EN_RUTA)
+                    actualizarOperacionEnViewModel(operacionActualizada, mapViewModel)
+                }
+                EstadoOperacion.EN_RUTA -> {
+                    Toast.makeText(requireContext(), "Gestionando ${operacion.asunto}", Toast.LENGTH_SHORT).show()
+                }
+                else -> {
+                    Toast.makeText(requireContext(), "Detalle de ${operacion.asunto}", Toast.LENGTH_SHORT).show()
+                }
+            }
+
+            bottomSheet.dismiss()
+        }
+
+        btnGeo.setOnClickListener {
+            mapService?.updateOperacionWithCurrentLocation(
+                operacion,
+                onSuccess = { operacionActualizada ->
+                    actualizarOperacionEnViewModel(operacionActualizada, mapViewModel)
+                    Toast.makeText(context, "Ubicación actualizada correctamente", Toast.LENGTH_SHORT).show()
+                },
+                onFailure = { e ->
+                    Toast.makeText(context, "Error al actualizar ubicación: ${e.message}", Toast.LENGTH_SHORT).show()
+                }
+            )
+        }
+
+        bottomSheet.setContentView(view)
+        bottomSheet.show()
+    }
+
+    private fun actualizarOperacionEnViewModel(operacionActualizada: Operacion, mapViewModel: MapViewModel) {
+        val listaActual = mapViewModel.operaciones.value ?: emptyList()
+        val listaActualizada = listaActual.map {
+            if (it.id == operacionActualizada.id) operacionActualizada else it
+        }
+        mapViewModel.setOperaciones(listaActualizada)
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        mapService?.stopLocationUpdates()
     }
 }

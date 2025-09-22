@@ -47,4 +47,7 @@ dependencies {
     androidTestImplementation(libs.androidx.espresso.core)
 
     implementation("org.osmdroid:osmdroid-android:6.1.16")
+    implementation("androidx.fragment:fragment-ktx:1.8.2")
+    implementation("com.google.android.gms:play-services-location:21.3.0")
+
 }

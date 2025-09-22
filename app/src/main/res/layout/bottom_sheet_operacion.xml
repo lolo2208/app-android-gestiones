@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:padding="16dp"
+    android:orientation="vertical">
+
+    <TextView
+        android:id="@+id/txtAsunto"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Asunto"
+        android:textSize="18sp"
+        android:textStyle="bold"/>
+
+    <TextView
+        android:id="@+id/txtCliente"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Cliente"
+        android:paddingTop="8dp"/>
+
+    <TextView
+        android:id="@+id/txtDireccion"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Direccion"
+        android:paddingTop="8dp"/>
+
+    <TextView
+        android:id="@+id/txtUbigeo"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Ubigeo"
+        android:paddingTop="8dp"/>
+
+    <TextView
+        android:id="@+id/txtReferencia"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Direccion"
+        android:paddingTop="8dp"/>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:orientation="horizontal">
+
+        <Button
+            android:id="@+id/btnAccion"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Ver detalle"
+            android:backgroundTint="@color/custom_primary"
+            android:layout_marginTop="16dp"/>
+
+        <Space
+            android:layout_width="12dp"
+            android:layout_height="0dp"/>
+
+        <Button
+            android:id="@+id/btnGeolocalizar"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:backgroundTint="@color/custom_third"
+            android:text="Corregir Coord."
+            android:layout_marginTop="16dp"/>
+
+    </LinearLayout>
+
+
+</LinearLayout>

@@ -19,9 +19,9 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:id="@+id/btnRuta"
-            android:textSize="24sp"
+            android:textSize="16sp"
             android:backgroundTint="@color/custom_primary"
-            android:text="Ruta">
+            android:text="Generar Ruta">
 
         </Button>
 

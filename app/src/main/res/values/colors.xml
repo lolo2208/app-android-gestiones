@@ -4,7 +4,10 @@
     <color name="white">#FFFFFFFF</color>
     <color name="custom_primary">#0d1b2a</color>
     <color name="custom_secondary">#1b263b</color>
+    <color name="custom_third">#415a77</color>
     <color name="custom_background">#e0e1dd</color>
     <color name="custom_green">#386641</color>
     <color name="custom_orange">#f77f00</color>
+    <color name="custom_red">#B22222</color>
+    <color name="location">#48cae4</color>
 </resources>

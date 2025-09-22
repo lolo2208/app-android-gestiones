@@ -3,6 +3,8 @@ package com.upc.appgestiones
 import android.content.Intent
 import android.os.Bundle
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
@@ -19,7 +21,34 @@ class MainActivity : AppCompatActivity() {
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
             insets
         }
+        solicitarPermisos()
+    }
 
+    private val requestPermissionLauncher =
+        registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
+            if (isGranted) {
+                AlertDialog.Builder(this)
+                    .setTitle("Permiso concedido")
+                    .setMessage("Ahora la aplicación puede acceder a tu ubicación.")
+                    .setPositiveButton("Aceptar") { _, _ ->
+                        navegarSegunLogin()
+                    }
+                    .show()
+            } else {
+                AlertDialog.Builder(this)
+                    .setTitle("Permiso denegado")
+                    .setMessage("La aplicación necesita permisos de ubicación para funcionar correctamente.")
+                    .setPositiveButton("Aceptar") { _, _ ->
+                        navegarSegunLogin()
+                    }
+                    .show()
+            }
+        }
+    private fun solicitarPermisos() {
+        requestPermissionLauncher.launch(android.Manifest.permission.ACCESS_FINE_LOCATION)
+    }
+
+    private fun navegarSegunLogin() {
         val prefs = getSharedPreferences("app_prefs", MODE_PRIVATE)
         val isLoggedIn = prefs.getBoolean("isLoggedIn", false)
 
