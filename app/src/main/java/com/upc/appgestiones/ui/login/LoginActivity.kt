@@ -9,6 +9,7 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import com.upc.appgestiones.R
 import com.upc.appgestiones.ui.home.HomeActivity
+import com.upc.appgestiones.ui.home.DrawerHomeActivity
 
 class LoginActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -23,7 +24,8 @@ class LoginActivity : AppCompatActivity() {
     }
 
     fun goToHome(view: View) {
-        val intent = Intent(this, HomeActivity::class.java)
+        val intent = Intent(this, DrawerHomeActivity::class.java)
         startActivity(intent)
+        finish() // para que al darle atrás no regrese al login
     }
 }
