@@ -17,6 +17,7 @@ import com.upc.appgestiones.ui.cartera.CarteraFragment
 import com.upc.appgestiones.ui.lista_completa.ListaCompletaFragment
 import com.upc.appgestiones.ui.map.MapFragment
 import com.upc.appgestiones.ui.map.MapViewModel
+import com.upc.appgestiones.ui.operaciones.OperacionesFragment
 
 class HomeActivity : AppCompatActivity() {
 
@@ -54,6 +55,7 @@ class HomeActivity : AppCompatActivity() {
                 }
                 R.id.done -> loadFragment(ListaCompletaFragment())
                 R.id.tasks -> loadFragment(CarteraFragment())
+                R.id.listado -> loadFragment(OperacionesFragment())
             }
             true
         }
