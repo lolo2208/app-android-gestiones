@@ -18,6 +18,9 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.AppGestiones">
         <activity
+            android:name=".ui.formulario.GestionRealizada"
+            android:exported="false" />
+        <activity
             android:name=".ui.formulario.FormularioActivity"
             android:exported="false" />
         <activity

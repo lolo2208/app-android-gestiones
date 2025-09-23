@@ -31,11 +31,15 @@
             android:layout_marginBottom="16dp">
 
             <LinearLayout
+                android:id="@+id/btnPendientes"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:gravity="center"
                 android:orientation="vertical"
-                android:padding="16dp">
+                android:padding="16dp"
+                android:clickable="true"
+                android:focusable="true"
+                android:background="?attr/selectableItemBackground">
 
                 <TextView
                     android:layout_width="match_parent"
@@ -65,28 +69,32 @@
             app:cardElevation="6dp">
 
             <LinearLayout
+                android:id="@+id/btnRealizadas"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:orientation="vertical"
                 android:gravity="center"
-                android:padding="16dp">
+                android:orientation="vertical"
+                android:padding="16dp"
+                android:clickable="true"
+                android:focusable="true"
+                android:background="?attr/selectableItemBackground">
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Gestiones Realizadas"
+                    android:textColor="@color/custom_green"
                     android:textSize="32dp"
-                    android:textStyle="bold"
-                    android:textColor="@color/custom_green" />
+                    android:textStyle="bold" />
 
                 <TextView
                     android:id="@+id/tvRealizadas"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
                     android:text="0"
                     android:textSize="64sp"
-                    android:textStyle="bold"
-                    android:layout_marginTop="8dp" />
+                    android:textStyle="bold" />
 
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
