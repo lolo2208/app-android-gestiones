@@ -56,6 +56,7 @@ class HomeActivity : AppCompatActivity() {
                 R.id.done -> loadFragment(ListaCompletaFragment())
                 R.id.tasks -> loadFragment(CarteraFragment())
                 R.id.listado -> loadFragment(OperacionesFragment())
+
             }
             true
         }

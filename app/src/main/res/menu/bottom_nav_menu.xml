@@ -1,5 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
-
     <item
         android:id="@+id/home"
         android:icon="@drawable/ic_home"
@@ -9,11 +9,10 @@
         android:id="@+id/tasks"
         android:icon="@drawable/ic_tasks"
         android:title="Cartera"/>
-
     <item
         android:id="@+id/listado"
         android:icon="@drawable/ic_list"
-    android:title="Operaciones"/>
+        android:title="Operaciones"/>
 
     <item
         android:id="@+id/map"
