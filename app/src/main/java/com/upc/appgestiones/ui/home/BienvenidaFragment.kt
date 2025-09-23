@@ -1,5 +1,6 @@
 package com.upc.appgestiones.ui.home
 
+import android.content.Intent
 import android.os.Bundle
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
@@ -7,9 +8,11 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
 import androidx.fragment.app.activityViewModels
-import androidx.fragment.app.viewModels
+import android.widget.LinearLayout
 import com.upc.appgestiones.R
 import com.upc.appgestiones.core.data.model.EstadoOperacion
+import android.widget.Toast
+import com.upc.appgestiones.ui.formulario.GestionRealizada
 
 // TODO: Rename parameter arguments, choose names that match
 // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
@@ -50,9 +53,22 @@ class BienvenidaFragment : Fragment() {
         val tvPendiente = view.findViewById<TextView>(R.id.tvPendientes)
         val tvRelizados = view.findViewById<TextView>(R.id.tvRealizadas)
 
+
+        val btnPendiente = view.findViewById<LinearLayout>(R.id.btnPendientes)
+        val btnRealizadas = view.findViewById<LinearLayout>(R.id.btnRealizadas)
+
         bienvenidaViewModel.operaciones.observe(viewLifecycleOwner) { operaciones ->
             tvPendiente.text = operaciones.count { it.estado != EstadoOperacion.FINALIZADA }.toString()
             tvRelizados.text = operaciones.count { it.estado == EstadoOperacion.FINALIZADA }.toString()
+        }
+        //TODO: H011
+        btnPendiente.setOnClickListener {
+            Toast.makeText(requireContext(), "Pendientes", Toast.LENGTH_SHORT).show()
+
+        }
+        btnRealizadas.setOnClickListener {
+            val intent = Intent(requireContext(), GestionRealizada::class.java)
+            startActivity(intent)
         }
     }
 
