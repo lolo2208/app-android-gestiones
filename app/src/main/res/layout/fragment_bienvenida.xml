@@ -44,7 +44,7 @@
                     android:gravity="center"
                     android:textSize="32dp"
                     android:textStyle="bold"
-                    android:textColor="@color/custom_green" />
+                    android:textColor="@color/custom_orange" />
 
                 <TextView
                     android:id="@+id/tvPendientes"
@@ -77,7 +77,7 @@
                     android:text="Gestiones Realizadas"
                     android:textSize="32dp"
                     android:textStyle="bold"
-                    android:textColor="@color/custom_orange" />
+                    android:textColor="@color/custom_green" />
 
                 <TextView
                     android:id="@+id/tvRealizadas"

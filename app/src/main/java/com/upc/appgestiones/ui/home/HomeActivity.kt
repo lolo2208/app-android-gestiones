@@ -17,10 +17,12 @@ import com.upc.appgestiones.ui.cartera.CarteraFragment
 import com.upc.appgestiones.ui.lista_completa.ListaCompletaFragment
 import com.upc.appgestiones.ui.map.MapFragment
 import com.upc.appgestiones.ui.map.MapViewModel
+import com.upc.appgestiones.ui.operaciones.OperacionesFragment
 
 class HomeActivity : AppCompatActivity() {
 
     private val mapViewModel: MapViewModel by viewModels()
+    private val bienvenidaViewModel: BienvenidaViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -33,7 +35,9 @@ class HomeActivity : AppCompatActivity() {
         }
 
         //Cargar operaciones
-        mapViewModel.setOperaciones(Operacion.fetchOperaciones())
+        val lista = Operacion.fetchOperaciones()
+        mapViewModel.setOperaciones(lista)
+        bienvenidaViewModel.setOperaciones(lista)
 
         val bottomNav = findViewById<BottomNavigationView>(R.id.bottomNavigationView)
 
@@ -51,6 +55,7 @@ class HomeActivity : AppCompatActivity() {
                 }
                 R.id.done -> loadFragment(ListaCompletaFragment())
                 R.id.tasks -> loadFragment(CarteraFragment())
+                R.id.listado -> loadFragment(OperacionesFragment())
             }
             true
         }

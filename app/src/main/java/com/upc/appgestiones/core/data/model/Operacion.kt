@@ -1,5 +1,5 @@
 package com.upc.appgestiones.core.data.model
-
+import java.io.Serializable
 data class Operacion(
     val id: Int,
     val idDireccion: Int,
@@ -11,7 +11,10 @@ data class Operacion(
     val estado: EstadoOperacion,
     val clienteNavigation: Cliente,
     val direccionNavigation: Direccion
-) {
+) : Serializable
+
+
+{
 
     companion object {
         fun fetchOperaciones(): List<Operacion> {
