@@ -1,25 +1,7 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
-
-
+    <!-- Base application theme. -->
     <style name="Base.Theme.AppGestiones" parent="Theme.Material3.DayNight.NoActionBar">
-
-        <item name="colorPrimary">@color/custom_primary</item>
-        <item name="colorOnPrimary">@color/white</item>
-
-        <item name="colorSecondary">@color/custom_secondary</item>
-        <item name="colorOnSecondary">@color/white</item>
-
-        <item name="colorSurface">@color/white</item>
-        <item name="colorOnSurface">@color/custom_primary</item>
-
-        <item name="android:colorBackground">@color/white</item>
-
-
-
-
+        <!-- Customize your dark theme here. -->
+        <!-- <item name="colorPrimary">@color/my_dark_primary</item> -->
     </style>
-
-
-    <style name="Theme.AppGestiones" parent="Base.Theme.AppGestiones" />
-
 </resources>
