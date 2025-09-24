@@ -22,7 +22,7 @@ class GestionesAdapter(
         private val imgEvidencia: ImageView = itemView.findViewById(R.id.imgEvidencia)
 
         fun bind(gestion: Gestion) {
-            txtCliente.text = "Operación: ${gestion.operacionNavigation.estado}"
+            txtCliente.text = "Operación: ${gestion.operacionNavigation.asunto}"
             txtFecha.text = "Fecha: ${gestion.fechaRegistro}"
             txtEstado.text = "Estado: ${gestion.operacionNavigation.estado}"
 

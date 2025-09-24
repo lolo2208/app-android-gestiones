@@ -1,5 +1,6 @@
 package com.upc.appgestiones.core.data.model
 
+import android.R
 import java.io.Serializable
 
 data class Gestion(
@@ -20,8 +21,8 @@ data class Gestion(
                     idOperacion = 4,
                     fechaRegistro = "2025-09-17T09:00:00",
                     formularioJson = """{"respuesta": "Pago realizado"}""",
-                    urlGrabacionVoz = null,
-                    urlFotoEvidencia = "https://servidor.com/foto1.jpg",
+                    urlGrabacionVoz = "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
+                    urlFotoEvidencia = "https://i.imgur.com/DvpvklR.png",
                     operacionNavigation = Operacion(
                         id = 4,
                         idDireccion = 4,
@@ -57,8 +58,8 @@ data class Gestion(
                     idOperacion = 8,
                     fechaRegistro = "2025-09-24T14:30:00",
                     formularioJson = """{"respuesta": "Cliente canceló"}""",
-                    urlGrabacionVoz = "https://servidor.com/audio123.mp3",
-                    urlFotoEvidencia = null,
+                    urlGrabacionVoz = "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
+                    urlFotoEvidencia = "https://i.imgur.com/DvpvklR.png",
                     operacionNavigation = Operacion(
                         id = 8,
                         idDireccion = 8,
