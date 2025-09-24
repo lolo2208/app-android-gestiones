@@ -2,6 +2,7 @@ package com.upc.appgestiones.ui.map
 
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
@@ -184,6 +185,8 @@ class MapFragment : Fragment() {
                 }
                 EstadoOperacion.EN_RUTA -> {
                     val intent = Intent(requireContext(), FormularioActivity::class.java)
+                    Log.d("MapFragment", "ID operacion = ${operacion.id}")
+                    intent.putExtra("ID_OPERACION", operacion.id)
                     startActivity(intent)
                 }
                 else -> {
