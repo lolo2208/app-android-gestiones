@@ -14,9 +14,9 @@ import androidx.drawerlayout.widget.DrawerLayout
 import androidx.fragment.app.Fragment
 import com.google.android.material.navigation.NavigationView
 import com.upc.appgestiones.R
-import com.upc.appgestiones.ui.cartera.CarteraFragment
 import com.upc.appgestiones.ui.lista_completa.ListaCompletaFragment
 import com.upc.appgestiones.ui.map.MapFragment
+import com.upc.appgestiones.ui.operaciones.OperacionesFragment
 
 class DrawerHomeActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListener {
 
@@ -80,7 +80,7 @@ class DrawerHomeActivity : AppCompatActivity(), NavigationView.OnNavigationItemS
                 supportActionBar?.title = "Home"
             }
             R.id.nav_pendientes -> {
-                loadFragment(CarteraFragment())
+                loadFragment(OperacionesFragment())
                 supportActionBar?.title = "Pendientes del día"
             }
             R.id.nav_mapa -> {

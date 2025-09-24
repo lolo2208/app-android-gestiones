@@ -13,16 +13,17 @@ import com.upc.appgestiones.core.data.model.Cliente
 import com.upc.appgestiones.core.data.model.Direccion
 import com.upc.appgestiones.core.data.model.Operacion
 import com.upc.appgestiones.core.data.model.TipoOperacion
-import com.upc.appgestiones.ui.cartera.CarteraFragment
 import com.upc.appgestiones.ui.lista_completa.ListaCompletaFragment
 import com.upc.appgestiones.ui.map.MapFragment
 import com.upc.appgestiones.ui.map.MapViewModel
+import com.upc.appgestiones.ui.operaciones.OperacionViewmodel
 import com.upc.appgestiones.ui.operaciones.OperacionesFragment
 
 class HomeActivity : AppCompatActivity() {
 
     private val mapViewModel: MapViewModel by viewModels()
     private val bienvenidaViewModel: BienvenidaViewModel by viewModels()
+    private val operacionViewmodel: OperacionViewmodel by viewModels ()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -34,10 +35,10 @@ class HomeActivity : AppCompatActivity() {
             insets
         }
 
-        //Cargar operaciones
         val lista = Operacion.fetchOperaciones()
         mapViewModel.setOperaciones(lista)
         bienvenidaViewModel.setOperaciones(lista)
+        operacionViewmodel.setOperaciones(lista)
 
         val bottomNav = findViewById<BottomNavigationView>(R.id.bottomNavigationView)
 

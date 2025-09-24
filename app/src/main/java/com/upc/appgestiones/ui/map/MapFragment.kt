@@ -23,6 +23,8 @@ import com.upc.appgestiones.core.data.model.Operacion
 import com.upc.appgestiones.core.services.MapService
 import com.upc.appgestiones.core.utils.MapUtil
 import com.upc.appgestiones.ui.formulario.FormularioActivity
+import com.upc.appgestiones.ui.home.BienvenidaViewModel
+import com.upc.appgestiones.ui.operaciones.OperacionViewmodel
 import org.osmdroid.config.Configuration
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory
 import org.osmdroid.util.GeoPoint
@@ -40,6 +42,8 @@ private const val ARG_PARAM2 = "param2"
  */
 class MapFragment : Fragment() {
     private val mapViewModel: MapViewModel by activityViewModels()
+    private val operacionViewmodel: OperacionViewmodel by activityViewModels()
+    private val bienvenidaViewModel: BienvenidaViewModel by activityViewModels()
     private var mapView: MapView? = null
     private var mapService: MapService? = null
 
@@ -52,7 +56,9 @@ class MapFragment : Fragment() {
 
             gestionJson?.let {
                 val gestion = Gson().fromJson(it, Gestion::class.java)
-                mapViewModel.manejarGestion(gestion)
+                val listaActual = mapViewModel.manejarGestion(gestion)
+                bienvenidaViewModel.setOperaciones(listaActual)
+                operacionViewmodel.setOperaciones(listaActual)
             }
         }
     }
@@ -238,6 +244,8 @@ class MapFragment : Fragment() {
             if (it.id == operacionActualizada.id) operacionActualizada else it
         }
         mapViewModel.setOperaciones(listaActualizada)
+        bienvenidaViewModel.setOperaciones(listaActualizada)
+        operacionViewmodel.setOperaciones(listaActualizada)
     }
 
     override fun onDestroyView() {

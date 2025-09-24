@@ -23,7 +23,7 @@ class MapViewModel : ViewModel() {
         _miUbicacion.value = point
     }
 
-    fun manejarGestion(gestion: Gestion) {
+    fun manejarGestion(gestion: Gestion) : List<Operacion> {
         val listaActual = _operaciones.value?.toMutableList() ?: mutableListOf()
 
         val index = listaActual.indexOfFirst { it.id == gestion.idOperacion }
@@ -36,5 +36,7 @@ class MapViewModel : ViewModel() {
             listaActual[index] = operacionFinalizada
             _operaciones.value = listaActual
         }
+
+        return  listaActual
     }
 }

@@ -22,6 +22,7 @@ import com.upc.appgestiones.core.data.model.TipoCampo
 import java.io.File
 import com.google.gson.Gson
 import com.jakewharton.threetenabp.AndroidThreeTen
+import com.upc.appgestiones.core.audio.AudioRecorderService
 import org.threeten.bp.LocalDateTime
 
 class FormularioActivity : AppCompatActivity() {
@@ -33,6 +34,9 @@ class FormularioActivity : AppCompatActivity() {
 
     private var currentPhotoCampo: String? = null
     private var currentPhotoUri: Uri? = null
+
+    private lateinit var audioRecorder: AudioRecorderService
+    private var audioPath: String? = null
 
     private val takePictureLauncher =
         registerForActivityResult(ActivityResultContracts.TakePicture()) { success ->
@@ -59,6 +63,16 @@ class FormularioActivity : AppCompatActivity() {
 
         operacionId = intent.getIntExtra("ID_OPERACION", -1)
         Log.d("FormularioActivity", "Recibiendo ID de Operación: $operacionId")
+
+        audioRecorder = AudioRecorderService(this)
+        if (audioRecorder.verificarAccesoAlMicro()) {
+            audioRecorder.iniciarGrabacion()
+            audioPath = audioRecorder.obtenerPathGrabacion()
+            Log.d("FormularioActivity", "Grabación iniciada en: $audioPath")
+        } else {
+            Log.e("FormularioActivity", "No se tienen permisos de grabación")
+        }
+
 
         if (operacionId != -1) {
             val operacion = fetchOperacionById(operacionId)
@@ -90,10 +104,12 @@ class FormularioActivity : AppCompatActivity() {
                         idOperacion = operacion.id,
                         fechaRegistro = LocalDateTime.now().toString(),
                         formularioJson = Gson().toJson(resultados),
-                        urlGrabacionVoz = null,
+                        urlGrabacionVoz = audioPath, // 🎙️ Aquí guardamos la grabación
                         urlFotoEvidencia = null,
                         operacionNavigation = operacion
                     )
+
+                    audioRecorder.finalizarGrabacion()
 
                     val gson = Gson()
                     val gestionJson = gson.toJson(gestion)
@@ -211,5 +227,13 @@ class FormularioActivity : AppCompatActivity() {
     private fun fetchOperacionById(id: Int): Operacion? {
         val listaDeOperaciones = Operacion.fetchOperaciones()
         return listaDeOperaciones.find { it.id == id }
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        if (::audioRecorder.isInitialized) {
+            audioRecorder.finalizarGrabacion()
+            Log.d("FormularioActivity", "Grabación detenida en onDestroy()")
+        }
     }
 }

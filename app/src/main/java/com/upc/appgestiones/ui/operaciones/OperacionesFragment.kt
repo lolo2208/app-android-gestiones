@@ -6,6 +6,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.activityViewModels
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
@@ -18,6 +19,8 @@ class OperacionesFragment : Fragment() {
     private lateinit var adapter: OperacionesAdapter
     private lateinit var swipeRefreshLayout: SwipeRefreshLayout
     private lateinit var txtVacio: TextView
+
+    private val operacionViewmodel: OperacionViewmodel by activityViewModels()
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -37,21 +40,20 @@ class OperacionesFragment : Fragment() {
                 .addToBackStack(null)
                 .commit()
         }
-
         recyclerView.adapter = adapter
 
-        cargarOperaciones()
-
         swipeRefreshLayout.setOnRefreshListener {
-            cargarOperaciones()
+            operacionViewmodel.refreshOperaciones()
+        }
+
+        operacionViewmodel.operaciones.observe(viewLifecycleOwner) { operaciones ->
+            cargarOperaciones(operaciones)
         }
 
         return view
     }
 
-    private fun cargarOperaciones() {
-        val lista = Operacion.fetchOperaciones()
-
+    private fun cargarOperaciones(lista: List<Operacion>) {
         if (lista.isEmpty()) {
             txtVacio.visibility = View.VISIBLE
             recyclerView.visibility = View.GONE
