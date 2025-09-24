@@ -54,7 +54,6 @@ class HomeActivity : AppCompatActivity() {
                         .commit()
                 }
                 R.id.done -> loadFragment(ListaCompletaFragment())
-                R.id.tasks -> loadFragment(CarteraFragment())
                 R.id.listado -> loadFragment(OperacionesFragment())
 
             }

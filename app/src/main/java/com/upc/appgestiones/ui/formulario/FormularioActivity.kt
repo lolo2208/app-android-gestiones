@@ -16,9 +16,13 @@ import androidx.core.view.WindowInsetsCompat
 import com.upc.appgestiones.R
 import com.upc.appgestiones.core.data.model.CampoFormulario
 import com.upc.appgestiones.core.data.model.Catalogo
+import com.upc.appgestiones.core.data.model.Gestion
 import com.upc.appgestiones.core.data.model.Operacion
 import com.upc.appgestiones.core.data.model.TipoCampo
 import java.io.File
+import com.google.gson.Gson
+import com.jakewharton.threetenabp.AndroidThreeTen
+import org.threeten.bp.LocalDateTime
 
 class FormularioActivity : AppCompatActivity() {
 
@@ -38,7 +42,6 @@ class FormularioActivity : AppCompatActivity() {
                 if (imageView != null) {
                     imageView.setImageURI(currentPhotoUri)
                     imageView.visibility = ImageView.VISIBLE
-                    // 👉 Guardamos la URI local como la respuesta
                     imageView.tag = currentPhotoUri.toString()
                 }
             }
@@ -48,6 +51,8 @@ class FormularioActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContentView(R.layout.activity_formulario)
+
+        AndroidThreeTen.init(this)
 
         containerFormulario = findViewById(R.id.containerFormulario)
         val btnGuardar: Button = findViewById(R.id.btnEnviarFormulario)
@@ -75,16 +80,26 @@ class FormularioActivity : AppCompatActivity() {
                         when (view) {
                             is EditText -> resultados[campo] = view.text.toString().trim()
                             is Spinner -> resultados[campo] = view.selectedItem?.toString()
-                            is ImageView -> resultados[campo] = view.tag // 👉 ahora es la URI string
+                            is ImageView -> resultados[campo] = view.tag
                         }
                     }
 
-                    Log.d("FormularioActivity", "Respuestas: $resultados")
-                    Toast.makeText(this, "Gestión guardada ✅", Toast.LENGTH_SHORT).show()
+                    val operacion = fetchOperacionById(operacionId)!!
+                    val gestion = Gestion(
+                        idGestion = (0..999999).random(),
+                        idOperacion = operacion.id,
+                        fechaRegistro = LocalDateTime.now().toString(),
+                        formularioJson = Gson().toJson(resultados),
+                        urlGrabacionVoz = null,
+                        urlFotoEvidencia = null,
+                        operacionNavigation = operacion
+                    )
+
+                    val gson = Gson()
+                    val gestionJson = gson.toJson(gestion)
 
                     val resultIntent = Intent().apply {
-                        putExtra("ID_OPERACION_RESUELTA", operacionId)
-                        putExtra("RESPUESTAS", HashMap(resultados))
+                        putExtra("GESTION_JSON", gestionJson)
                     }
                     setResult(RESULT_OK, resultIntent)
                     finish()

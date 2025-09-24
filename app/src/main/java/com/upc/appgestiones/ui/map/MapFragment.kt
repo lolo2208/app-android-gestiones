@@ -1,5 +1,6 @@
 package com.upc.appgestiones.ui.map
 
+import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
@@ -10,11 +11,14 @@ import android.view.ViewGroup
 import android.widget.Button
 import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.activityViewModels
 import com.google.android.material.bottomsheet.BottomSheetDialog
+import com.google.gson.Gson
 import com.upc.appgestiones.R
 import com.upc.appgestiones.core.data.model.EstadoOperacion
+import com.upc.appgestiones.core.data.model.Gestion
 import com.upc.appgestiones.core.data.model.Operacion
 import com.upc.appgestiones.core.services.MapService
 import com.upc.appgestiones.core.utils.MapUtil
@@ -38,6 +42,20 @@ class MapFragment : Fragment() {
     private val mapViewModel: MapViewModel by activityViewModels()
     private var mapView: MapView? = null
     private var mapService: MapService? = null
+
+    private val formularioLauncher = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            val data: Intent? = result.data
+            val gestionJson = data?.getStringExtra("GESTION_JSON")
+
+            gestionJson?.let {
+                val gestion = Gson().fromJson(it, Gestion::class.java)
+                mapViewModel.manejarGestion(gestion)
+            }
+        }
+    }
 
     // TODO: Rename and change types of parameters
     private var param1: String? = null
@@ -187,7 +205,7 @@ class MapFragment : Fragment() {
                     val intent = Intent(requireContext(), FormularioActivity::class.java)
                     Log.d("MapFragment", "ID operacion = ${operacion.id}")
                     intent.putExtra("ID_OPERACION", operacion.id)
-                    startActivity(intent)
+                    formularioLauncher.launch(intent)
                 }
                 else -> {
                     Toast.makeText(requireContext(), "Detalle de ${operacion.asunto}", Toast.LENGTH_SHORT).show()

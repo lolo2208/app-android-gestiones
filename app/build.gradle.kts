@@ -50,4 +50,6 @@ dependencies {
     implementation("androidx.fragment:fragment-ktx:1.8.2")
     implementation("com.google.android.gms:play-services-location:21.3.0")
     implementation("androidx.swiperefreshlayout:swiperefreshlayout:1.1.0")
+    implementation("com.google.code.gson:gson:2.11.0")
+    implementation("com.jakewharton.threetenabp:threetenabp:1.4.6")
 }
