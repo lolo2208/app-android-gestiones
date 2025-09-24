@@ -1,146 +1,78 @@
 <?xml version="1.0" encoding="utf-8"?>
-
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/main"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".ui.formulario.GestionRealizada">
+    android:padding="16dp">
 
-
-
-    <ScrollView
+    <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
 
-        <LinearLayout
+        <!-- ID de la gestión -->
+        <TextView
+            android:id="@+id/txtIdGestion"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:padding="16dp">
+            android:text="ID Gestión: "
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:paddingBottom="8dp" />
 
-            <LinearLayout
-                android:id="@+id/btnBack"
-                android:layout_marginTop="15dp"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:background="?attr/selectableItemBackground"
-                android:clickable="true"
-                android:focusable="true"
-                android:orientation="vertical">
+        <!-- ID de la operación -->
+        <TextView
+            android:id="@+id/txtIdOperacion"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="ID Operación: "
+            android:textSize="16sp"
+            android:paddingBottom="8dp" />
 
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:layout_marginBottom="16dp"
-                android:drawableLeft="@drawable/ic_back"
-                android:text="Detalles de la Gestión"
-                android:textAlignment="center"
-                android:textSize="24sp"
-                android:textStyle="bold" />
+        <!-- Fecha -->
+        <TextView
+            android:id="@+id/txtFechaRegistro"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Fecha Registro: "
+            android:textSize="16sp"
+            android:paddingBottom="8dp" />
 
-            </LinearLayout>
+        <!-- Estado operación -->
+        <TextView
+            android:id="@+id/txtEstadoOperacion"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Estado: "
+            android:textSize="16sp"
+            android:paddingBottom="8dp" />
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Cliente:"
-                android:textStyle="bold" />
+        <!-- JSON del formulario -->
+        <TextView
+            android:id="@+id/txtFormulario"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Formulario: "
+            android:textSize="16sp"
+            android:paddingBottom="16dp" />
 
-            <TextView
-                android:id="@+id/tvNombreCliente"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="8dp"
-                tools:text="Nombre del Cliente" />
+        <!-- Evidencia en imagen -->
+        <ImageView
+            android:id="@+id/imgEvidencia"
+            android:layout_width="match_parent"
+            android:layout_height="200dp"
+            android:scaleType="centerCrop"
+            android:contentDescription="Imagen de evidencia"
+            android:background="@android:color/darker_gray"
+            android:paddingBottom="16dp" />
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Fecha y Hora:"
-                android:textStyle="bold" />
+        <!-- Botón para reproducir grabación -->
+        <ImageView
+            android:id="@+id/btnPlayAudio"
+            android:layout_width="64dp"
+            android:layout_height="64dp"
+            android:src="@android:drawable/ic_media_play"
+            android:contentDescription="Reproducir audio"
+            android:visibility="gone" />
 
-            <TextView
-                android:id="@+id/tvFechaHora"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="8dp"
-                tools:text="22/09/2025 - 10:30 AM" />
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Estado Final:"
-                android:textStyle="bold" />
-
-            <TextView
-                android:id="@+id/tvEstadoFinal"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="8dp"
-                tools:text="Finalizada" />
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Observaciones:"
-                android:textStyle="bold" />
-
-            <TextView
-                android:id="@+id/tvObservaciones"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="16dp"
-                tools:text="Cliente no estaba en casa." />
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Adjuntos:"
-                android:textStyle="bold" />
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:orientation="vertical">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Foto 1"
-                    android:textStyle="bold" />
-
-                <ImageView
-                    android:id="@+id/ivFotoAdjunta"
-                    android:layout_width="match_parent"
-                    android:layout_height="200dp"
-                    android:scaleType="centerCrop"
-                    tools:src="@drawable/img_cer" />
-            </LinearLayout>
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                android:orientation="vertical">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Audio 1"
-                    android:textStyle="bold" />
-
-                <Button
-                    android:id="@+id/btnAudioAdjunto"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:drawableRight="@drawable/ic_sound"
-
-                    android:text="Reproducir Audio" />
-            </LinearLayout>
-
-        </LinearLayout>
-    </ScrollView>
-</LinearLayout>
+    </LinearLayout>
+</ScrollView>

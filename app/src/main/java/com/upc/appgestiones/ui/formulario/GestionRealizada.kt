@@ -19,10 +19,9 @@ class GestionRealizada : AppCompatActivity() {
             insets
 
         }
-        val btnRegresar = findViewById<LinearLayout>(R.id.btnBack)
-        btnRegresar.setOnClickListener {
-            onBackPressedDispatcher.onBackPressed()
+       // val btnRegresar = findViewById<LinearLayout>(R.id.btnBack)
+      //  btnRegresar.setOnClickListener {
+       //     onBackPressedDispatcher.onBackPressed()
         }
 
     }
-}
