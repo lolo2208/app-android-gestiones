@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".ui.gestiones.DetalleGestionFragment">
+
+    <ScrollView
+        android:id="@+id/main"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:padding="16dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <!-- ID de la gestión -->
+            <TextView
+                android:id="@+id/txtIdGestion"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="ID Gestión: "
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:paddingBottom="8dp" />
+
+            <!-- ID de la operación -->
+            <TextView
+                android:id="@+id/txtIdOperacion"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="ID Operación: "
+                android:textSize="16sp"
+                android:paddingBottom="8dp" />
+
+            <!-- Fecha -->
+            <TextView
+                android:id="@+id/txtFechaRegistro"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Fecha Registro: "
+                android:textSize="16sp"
+                android:paddingBottom="8dp" />
+
+            <!-- Estado operación -->
+            <TextView
+                android:id="@+id/txtEstadoOperacion"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Estado: "
+                android:textSize="16sp"
+                android:paddingBottom="8dp" />
+
+            <!-- Nombre y apellidos -->
+            <TextView
+                android:id="@+id/txtNombre"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Nombre y Apellidos:"
+                android:textSize="16sp"
+                android:paddingBottom="8dp"/>
+
+            <!-- Documento-->
+            <TextView
+                android:id="@+id/txtDocumento"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Documento:"
+                android:textSize="16sp"
+                android:paddingBottom="8dp"/>
+
+            <!-- Direccion -->
+            <TextView
+                android:id="@+id/txtDireccion"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Direccion:"
+                android:textSize="16sp"
+                android:paddingBottom="8dp"/>
+
+
+
+            <!-- JSON del formulario -->
+            <TextView
+                android:id="@+id/txtFormulario"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Formulario: "
+                android:textSize="16sp"
+                android:paddingBottom="16dp" />
+
+            <!-- Evidencia en imagen -->
+            <ImageView
+                android:id="@+id/imgEvidencia"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:adjustViewBounds="true"
+                android:scaleType="centerCrop"
+                android:contentDescription="Imagen de evidencia"
+                android:background="@android:color/darker_gray"
+                android:paddingBottom="16dp" />
+
+            <!-- Botón para reproducir grabación -->
+            <ImageView
+                android:id="@+id/btnPlayAudio"
+                android:layout_width="64dp"
+                android:layout_height="64dp"
+                android:scaleType="center"
+                android:src="@android:drawable/ic_media_play"
+                android:contentDescription="Reproducir audio"
+                android:visibility="gone"
+                android:paddingBottom="16dp"/>
+
+        </LinearLayout>
+    </ScrollView>
+
+</FrameLayout>

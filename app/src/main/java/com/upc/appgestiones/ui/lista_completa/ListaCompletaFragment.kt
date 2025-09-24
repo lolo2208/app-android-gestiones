@@ -5,56 +5,68 @@ import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.TextView
+import androidx.recyclerview.widget.RecyclerView
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import com.upc.appgestiones.R
+import com.upc.appgestiones.ui.gestiones.DetalleGestionActivity
+import com.upc.appgestiones.ui.gestiones.DetalleGestionFragment
+import com.upc.appgestiones.ui.gestiones.GestionesAdapter
 
-// TODO: Rename parameter arguments, choose names that match
-// the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
-private const val ARG_PARAM1 = "param1"
-private const val ARG_PARAM2 = "param2"
 
-/**
- * A simple [Fragment] subclass.
- * Use the [ListaCompletaFragment.newInstance] factory method to
- * create an instance of this fragment.
- */
 class ListaCompletaFragment : Fragment() {
-    // TODO: Rename and change types of parameters
-    private var param1: String? = null
-    private var param2: String? = null
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        arguments?.let {
-            param1 = it.getString(ARG_PARAM1)
-            param2 = it.getString(ARG_PARAM2)
-        }
-    }
+    private lateinit var recyclerView: RecyclerView
+    private lateinit var adapter: GestionesAdapter
+    private lateinit var swipeRefreshLayout: SwipeRefreshLayout
+    private lateinit var txtVacio: TextView
+
+
 
     override fun onCreateView(
-        inflater: LayoutInflater, container: ViewGroup?,
+        inflater: LayoutInflater,
+        container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        // Inflate the layout for this fragment
-        return inflater.inflate(R.layout.fragment_lista_completa, container, false)
-    }
+        val view = inflater.inflate(R.layout.fragment_lista_completa, container, false)
 
-    companion object {
-        /**
-         * Use this factory method to create a new instance of
-         * this fragment using the provided parameters.
-         *
-         * @param param1 Parameter 1.
-         * @param param2 Parameter 2.
-         * @return A new instance of fragment ListaCompletaFragment.
-         */
-        // TODO: Rename and change types and number of parameters
-        @JvmStatic
-        fun newInstance(param1: String, param2: String) =
-            ListaCompletaFragment().apply {
-                arguments = Bundle().apply {
-                    putString(ARG_PARAM1, param1)
-                    putString(ARG_PARAM2, param2)
-                }
+        recyclerView = view.findViewById(R.id.recyclerGestiones)
+        swipeRefreshLayout = view.findViewById(R.id.swipeRefresh)
+        txtVacio = view.findViewById(R.id.txtVacio)
+
+        recyclerView.layoutManager =
+            androidx.recyclerview.widget.LinearLayoutManager(requireContext())
+        adapter = GestionesAdapter(emptyList()) { gestion ->
+            parentFragmentManager.beginTransaction().replace(R.id.frameLayout,
+                DetalleGestionFragment.newInstance(gestion))
+                .addToBackStack(null)
+                .commit()
+        }
+        recyclerView.adapter = adapter
+        cargarGestiones()
+        swipeRefreshLayout.setOnRefreshListener {
+            cargarGestiones()
+
+        }
+        return view
+    }
+    private fun cargarGestiones() {
+        val lista = com.upc.appgestiones.core.data.model.Gestion.fetchGestionesFinalizadas()
+
+        if (lista.isEmpty()) {
+            txtVacio.visibility = View.VISIBLE
+            recyclerView.visibility = View.GONE
+        } else {
+            txtVacio.visibility = View.GONE
+            recyclerView.visibility = View.VISIBLE
+            adapter = GestionesAdapter(lista) { gestion ->
+                parentFragmentManager.beginTransaction()
+                    .replace(R.id.frameLayout, DetalleGestionFragment.newInstance(gestion))
+                    .addToBackStack(null)
+                    .commit()
             }
+            recyclerView.adapter = adapter
+        }
+        swipeRefreshLayout.isRefreshing = false
     }
 }

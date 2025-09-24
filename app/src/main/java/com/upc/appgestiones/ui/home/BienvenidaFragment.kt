@@ -12,7 +12,7 @@ import android.widget.LinearLayout
 import com.upc.appgestiones.R
 import com.upc.appgestiones.core.data.model.EstadoOperacion
 import android.widget.Toast
-import com.upc.appgestiones.ui.formulario.GestionRealizada
+import com.upc.appgestiones.ui.gestiones.DetalleGestionActivity
 
 // TODO: Rename parameter arguments, choose names that match
 // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
@@ -67,7 +67,7 @@ class BienvenidaFragment : Fragment() {
 
         }
         btnRealizadas.setOnClickListener {
-            val intent = Intent(requireContext(), GestionRealizada::class.java)
+            val intent = Intent(requireContext(), DetalleGestionActivity::class.java)
             startActivity(intent)
         }
     }
