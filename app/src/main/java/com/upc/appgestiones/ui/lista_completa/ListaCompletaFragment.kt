@@ -6,9 +6,11 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
+import androidx.fragment.app.activityViewModels
 import androidx.recyclerview.widget.RecyclerView
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import com.upc.appgestiones.R
+import com.upc.appgestiones.core.data.model.Gestion
 import com.upc.appgestiones.ui.gestiones.DetalleGestionActivity
 import com.upc.appgestiones.ui.gestiones.DetalleGestionFragment
 import com.upc.appgestiones.ui.gestiones.GestionesAdapter
@@ -20,7 +22,6 @@ class ListaCompletaFragment : Fragment() {
     private lateinit var adapter: GestionesAdapter
     private lateinit var swipeRefreshLayout: SwipeRefreshLayout
     private lateinit var txtVacio: TextView
-
 
 
     override fun onCreateView(
@@ -43,16 +44,13 @@ class ListaCompletaFragment : Fragment() {
                 .commit()
         }
         recyclerView.adapter = adapter
-        cargarGestiones()
-        swipeRefreshLayout.setOnRefreshListener {
-            cargarGestiones()
 
-        }
+
+        cargarGestiones(Gestion.fetchGestionesFinalizadas())
+
         return view
     }
-    private fun cargarGestiones() {
-        val lista = com.upc.appgestiones.core.data.model.Gestion.fetchGestionesFinalizadas()
-
+    private fun cargarGestiones(lista:List<Gestion>) {
         if (lista.isEmpty()) {
             txtVacio.visibility = View.VISIBLE
             recyclerView.visibility = View.GONE

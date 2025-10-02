@@ -59,6 +59,13 @@ class MapFragment : Fragment() {
                 val listaActual = mapViewModel.manejarGestion(gestion)
                 bienvenidaViewModel.setOperaciones(listaActual)
                 operacionViewmodel.setOperaciones(listaActual)
+
+                val operacionFinalizada = listaActual.find { op -> op.id == gestion.idOperacion }
+                if(operacionFinalizada != null) {
+                    val gestionActualizada = gestion.copy(
+                        operacionNavigation = operacionFinalizada!!
+                    )
+                }
             }
         }
     }
