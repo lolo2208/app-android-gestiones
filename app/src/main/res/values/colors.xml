@@ -15,4 +15,5 @@
     <color name="card_blue">#0A6ADC</color>
     <color name="location">#48cae4</color>
     <color name="nav_item_color">#48cae4</color>
+    <color name="outline_color">#BDBDBD</color>
 </resources>

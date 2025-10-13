@@ -146,18 +146,32 @@ class DetalleGestionFragment : Fragment() {
 
             when (tipo) {
                 TipoCampo.TEXT, TipoCampo.SELECT, TipoCampo.FECHA -> {
-                    val editText = com.google.android.material.textfield.TextInputEditText(context).apply {
+                    val textInputLayout = com.google.android.material.textfield.TextInputLayout(context, null).apply {
+                        layoutParams = LinearLayout.LayoutParams(
+                            LinearLayout.LayoutParams.MATCH_PARENT,
+                            LinearLayout.LayoutParams.WRAP_CONTENT
+                        ).apply { bottomMargin = 24 }
+
+                        setBoxBackgroundMode(com.google.android.material.textfield.TextInputLayout.BOX_BACKGROUND_OUTLINE)
+                        boxStrokeColor = ContextCompat.getColor(context, R.color.custom_primary)
+                        hint = campo.etiqueta
+                        isHintEnabled = true
+                        setStartIconTintList(ContextCompat.getColorStateList(context, R.color.custom_primary))
+                    }
+
+                    val editText = com.google.android.material.textfield.TextInputEditText(textInputLayout.context).apply {
                         layoutParams = LinearLayout.LayoutParams(
                             LinearLayout.LayoutParams.MATCH_PARENT,
                             LinearLayout.LayoutParams.WRAP_CONTENT
                         )
                         setText(valor.ifBlank { "—" })
-                        // 🔹 Importante: mantener habilitado pero solo lectura
-                        isEnabled = true
+                        isEnabled = false
                         isFocusable = false
                         isClickable = false
                         setTextColor(ContextCompat.getColor(context, R.color.black))
+                        textSize = 16f
                     }
+
                     textInputLayout.addView(editText)
                     container.addView(textInputLayout)
                 }
@@ -179,31 +193,6 @@ class DetalleGestionFragment : Fragment() {
                 }
             }
         }
-
-        // Campo final: respuesta gestión
-        val respuestaCodigo = gestion.respuesta
-        val descripcionRespuesta = obtenerDescripcionCatalogo("RespuestasGestion", respuestaCodigo) ?: respuestaCodigo
-
-        val respuestaLayout = com.google.android.material.textfield.TextInputLayout(context).apply {
-            layoutParams = LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT
-            ).apply { topMargin = 24 }
-            hint = "Respuesta gestión"
-            setBoxBackgroundMode(com.google.android.material.textfield.TextInputLayout.BOX_BACKGROUND_OUTLINE)
-            setStartIconDrawable(R.drawable.ic_check)
-            boxStrokeColor = ContextCompat.getColor(context, R.color.custom_primary)
-        }
-
-        val respuestaEdit = com.google.android.material.textfield.TextInputEditText(context).apply {
-            setText(descripcionRespuesta)
-            isFocusable = false
-            isClickable = false
-            setTextColor(ContextCompat.getColor(context, R.color.black))
-        }
-
-        respuestaLayout.addView(respuestaEdit)
-        container.addView(respuestaLayout)
 
         val index = parent.indexOfChild(txtFormulario)
         parent.removeViewAt(index)

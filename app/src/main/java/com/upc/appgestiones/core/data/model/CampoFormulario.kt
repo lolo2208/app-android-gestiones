@@ -40,14 +40,6 @@ data class CampoFormulario(
                     esObligatorio = true
                 ),
                 CampoFormulario(
-                    idCampoFormulario = 4,
-                    tipoFormulario = "VERIFICACION",
-                    nombreCampo = "observaciones",
-                    etiqueta = "Observaciones",
-                    tipoCampo = TipoCampo.TEXT,
-                    esObligatorio = false
-                ),
-                CampoFormulario(
                     idCampoFormulario = 5,
                     tipoFormulario = "VERIFICACION",
                     nombreCampo = "tipoNegocio",
@@ -90,14 +82,6 @@ data class CampoFormulario(
                     etiqueta = "Fecha del pago",
                     tipoCampo = TipoCampo.FECHA,
                     esObligatorio = true
-                ),
-                CampoFormulario(
-                    idCampoFormulario = 10,
-                    tipoFormulario = "COBRANZA",
-                    nombreCampo = "observaciones",
-                    etiqueta = "Observaciones",
-                    tipoCampo = TipoCampo.TEXT,
-                    esObligatorio = false
                 )
             )
         }
