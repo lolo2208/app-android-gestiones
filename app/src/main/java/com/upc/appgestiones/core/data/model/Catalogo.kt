@@ -28,10 +28,19 @@ data class Catalogo(
                 DetalleCatalogo(10, "Vencido", "VENCIDO")
             )
 
+            val respuestasGestion = listOf(
+                DetalleCatalogo(11, "PAGCOM", "Pago Completo"),
+                DetalleCatalogo(12, "PAGPAR", "Pago Parcial"),
+                DetalleCatalogo(13, "NEGPAG", "Negativa Pago"),
+                DetalleCatalogo(14, "VEREXI", "Verifiación Exitosa"),
+                DetalleCatalogo(15, "VERINC", "Verificacion Incompleta"),
+            )
+
             return listOf(
                 Catalogo(1, "ESTADOS_NEGOCIO", "EstadosNegocio", estadosNegocioDetalles),
                 Catalogo(2, "TIPOS_NEGOCIO", "TiposNegocio", tiposNegocioDetalles),
-                Catalogo(3, "ESTADOS_PAGO", "EstadosPago", estadosPagoDetalles)
+                Catalogo(3, "ESTADOS_PAGO", "EstadosPago", estadosPagoDetalles),
+                Catalogo(4, "RESPUESTAS_GESTION", "RespuestasGestion", respuestasGestion),
             )
         }
     }

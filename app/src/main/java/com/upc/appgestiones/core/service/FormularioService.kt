@@ -1,5 +1,6 @@
 package com.upc.appgestiones.core.service
 
+import android.R
 import android.content.Context
 import android.view.View
 import android.widget.EditText
@@ -7,6 +8,7 @@ import android.widget.ImageView
 import android.widget.Spinner
 import android.widget.ArrayAdapter
 import android.widget.LinearLayout
+import android.widget.LinearLayout.*
 import com.upc.appgestiones.core.data.model.CampoFormulario
 import com.upc.appgestiones.core.data.model.Operacion
 import com.upc.appgestiones.core.data.model.TipoCampo
@@ -36,7 +38,7 @@ class FormularioService(private val context: Context) {
                 TipoCampo.TEXT -> {
                     val editText = EditText(context).apply {
                         hint = campo.etiqueta
-                        layoutParams = LinearLayout.LayoutParams(
+                        layoutParams = LayoutParams(
                             LinearLayout.LayoutParams.MATCH_PARENT,
                             LinearLayout.LayoutParams.WRAP_CONTENT
                         )
@@ -53,24 +55,26 @@ class FormularioService(private val context: Context) {
                         val opciones = obtenerOpciones(campo.nombreCatalogo)
                         adapter = ArrayAdapter(
                             context,
-                            android.R.layout.simple_spinner_item,
+                            R.layout.simple_spinner_item,
                             opciones
-                        ).also { it.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item) }
+                        ).also { it.setDropDownViewResource(R.layout.simple_spinner_dropdown_item) }
                     }
                     spinner
                 }
                 TipoCampo.FOTO -> {
                     val imageView = ImageView(context).apply {
-                        layoutParams = LinearLayout.LayoutParams(
+                        layoutParams = LayoutParams(
                             200, // ancho
                             200  // alto
                         )
-                        setBackgroundResource(android.R.color.darker_gray)
+                        setBackgroundResource(R.color.darker_gray)
                         scaleType = ImageView.ScaleType.CENTER_CROP
                         contentDescription = campo.etiqueta
                     }
                     imageView
                 }
+
+                TipoCampo.FECHA -> TODO()
             }
 
             viewsMap[campo.nombreCampo] = view

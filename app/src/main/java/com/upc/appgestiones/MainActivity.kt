@@ -28,13 +28,7 @@ class MainActivity : AppCompatActivity() {
     private val requestPermissionLauncher =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
             if (isGranted) {
-                AlertDialog.Builder(this)
-                    .setTitle("Permiso concedido")
-                    .setMessage("Ahora la aplicación puede acceder a tu ubicación.")
-                    .setPositiveButton("Aceptar") { _, _ ->
-                        navegarSegunLogin()
-                    }
-                    .show()
+                navegarSegunLogin()
             } else {
                 AlertDialog.Builder(this)
                     .setTitle("Permiso denegado")

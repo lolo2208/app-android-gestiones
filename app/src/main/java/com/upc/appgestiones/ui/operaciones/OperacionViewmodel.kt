@@ -25,7 +25,7 @@ class OperacionViewmodel : ViewModel() {
 
     fun actualizarOperacion(operacionActualizada: Operacion) {
         val listaActual = _operaciones.value?.toMutableList() ?: mutableListOf()
-        val index = listaActual.indexOfFirst { it.id == operacionActualizada.id }
+        val index = listaActual.indexOfFirst { it.idOperacion == operacionActualizada.idOperacion }
         if (index != -1) {
             listaActual[index] = operacionActualizada
             _operaciones.value = listaActual

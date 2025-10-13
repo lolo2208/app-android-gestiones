@@ -10,6 +10,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
@@ -101,11 +102,12 @@ class FormularioActivity : AppCompatActivity() {
                     val operacion = fetchOperacionById(operacionId)!!
                     val gestion = Gestion(
                         idGestion = (0..999999).random(),
-                        idOperacion = operacion.id,
+                        idOperacion = operacion.idOperacion,
                         fechaRegistro = LocalDateTime.now().toString(),
                         formularioJson = Gson().toJson(resultados),
                         urlGrabacionVoz = audioPath, // 🎙️ Aquí guardamos la grabación
                         urlFotoEvidencia = null,
+                        respuesta = "",
                         operacionNavigation = operacion
                     )
 
@@ -146,14 +148,29 @@ class FormularioActivity : AppCompatActivity() {
 
             when (campo.tipoCampo) {
                 TipoCampo.TEXT -> {
-                    val editText = EditText(this).apply {
+                    val textInputLayout = com.google.android.material.textfield.TextInputLayout(this).apply {
                         layoutParams = LinearLayout.LayoutParams(
                             LinearLayout.LayoutParams.MATCH_PARENT,
                             LinearLayout.LayoutParams.WRAP_CONTENT
                         ).apply { bottomMargin = 32 }
-                        hint = "Ingrese ${campo.etiqueta}"
+
+                        hint = campo.etiqueta
+                        setStartIconDrawable(R.drawable.ic_user)
+                        setBoxBackgroundMode(com.google.android.material.textfield.TextInputLayout.BOX_BACKGROUND_OUTLINE)
                     }
-                    containerFormulario.addView(editText)
+
+                    val editText = com.google.android.material.textfield.TextInputEditText(textInputLayout.context).apply {
+                        layoutParams = LinearLayout.LayoutParams(
+                            LinearLayout.LayoutParams.MATCH_PARENT,
+                            LinearLayout.LayoutParams.WRAP_CONTENT
+                        )
+                        inputType = android.text.InputType.TYPE_CLASS_TEXT
+                    }
+
+                    textInputLayout.addView(editText)
+
+                    containerFormulario.addView(textInputLayout)
+
                     respuestas[campo.nombreCampo] = editText
                 }
 
@@ -162,21 +179,40 @@ class FormularioActivity : AppCompatActivity() {
                         .find { it.nombreCatalogo == campo.nombreCatalogo }
                     val items = catalogo?.detallesCatalogo?.map { it.codigoDetalle } ?: emptyList()
 
-                    val spinner = Spinner(this).apply {
+                    val textInputLayout = com.google.android.material.textfield.TextInputLayout(this).apply {
                         layoutParams = LinearLayout.LayoutParams(
                             LinearLayout.LayoutParams.MATCH_PARENT,
                             LinearLayout.LayoutParams.WRAP_CONTENT
                         ).apply { bottomMargin = 32 }
+
+                        hint = campo.etiqueta
+                        isHintEnabled = true
+                        setBoxBackgroundMode(com.google.android.material.textfield.TextInputLayout.BOX_BACKGROUND_OUTLINE)
+                        setEndIconDrawable(R.drawable.ic_arrow_drop_down)
+                        setEndIconTintList(ContextCompat.getColorStateList(context, R.color.custom_primary))
                     }
-                    val adapter = ArrayAdapter(
-                        this,
-                        android.R.layout.simple_spinner_item,
-                        items
-                    )
-                    adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
-                    spinner.adapter = adapter
-                    containerFormulario.addView(spinner)
-                    respuestas[campo.nombreCampo] = spinner
+
+                    val autoComplete = com.google.android.material.textfield.MaterialAutoCompleteTextView(textInputLayout.context).apply {
+                        layoutParams = LinearLayout.LayoutParams(
+                            LinearLayout.LayoutParams.MATCH_PARENT,
+                            LinearLayout.LayoutParams.WRAP_CONTENT
+                        )
+                        inputType = android.text.InputType.TYPE_NULL
+                        keyListener = null
+                        setAdapter(
+                            ArrayAdapter(
+                                context,
+                                android.R.layout.simple_dropdown_item_1line,
+                                items
+                            )
+                        )
+                    }
+
+                    textInputLayout.addView(autoComplete)
+
+                    containerFormulario.addView(textInputLayout)
+
+                    respuestas[campo.nombreCampo] = autoComplete
                 }
 
                 TipoCampo.FOTO -> {
@@ -207,6 +243,50 @@ class FormularioActivity : AppCompatActivity() {
                         takePictureLauncher.launch(currentPhotoUri!!)
                     }
                 }
+
+                TipoCampo.FECHA -> {
+                    val textInputLayout = com.google.android.material.textfield.TextInputLayout(this).apply {
+                        layoutParams = LinearLayout.LayoutParams(
+                            LinearLayout.LayoutParams.MATCH_PARENT,
+                            LinearLayout.LayoutParams.WRAP_CONTENT
+                        ).apply { bottomMargin = 32 }
+
+                        hint = campo.etiqueta
+                        setBoxBackgroundMode(com.google.android.material.textfield.TextInputLayout.BOX_BACKGROUND_OUTLINE)
+                        setStartIconDrawable(R.drawable.ic_calendar)
+                    }
+
+                    val editText = com.google.android.material.textfield.TextInputEditText(textInputLayout.context).apply {
+                        layoutParams = LinearLayout.LayoutParams(
+                            LinearLayout.LayoutParams.MATCH_PARENT,
+                            LinearLayout.LayoutParams.WRAP_CONTENT
+                        )
+                        inputType = android.text.InputType.TYPE_NULL
+                        isFocusable = false
+                        isClickable = true
+
+                        setOnClickListener {
+                            val calendar = java.util.Calendar.getInstance()
+                            val datePicker = android.app.DatePickerDialog(
+                                context,
+                                { _, year, month, dayOfMonth ->
+                                    val selectedDate = String.format("%02d/%02d/%04d", dayOfMonth, month + 1, year)
+                                    setText(selectedDate)
+                                },
+                                calendar.get(java.util.Calendar.YEAR),
+                                calendar.get(java.util.Calendar.MONTH),
+                                calendar.get(java.util.Calendar.DAY_OF_MONTH)
+                            )
+                            datePicker.show()
+                        }
+                    }
+
+                    textInputLayout.addView(editText)
+
+                    containerFormulario.addView(textInputLayout)
+
+                    respuestas[campo.nombreCampo] = editText
+                }
             }
         }
     }
@@ -226,7 +306,7 @@ class FormularioActivity : AppCompatActivity() {
 
     private fun fetchOperacionById(id: Int): Operacion? {
         val listaDeOperaciones = Operacion.fetchOperaciones()
-        return listaDeOperaciones.find { it.id == id }
+        return listaDeOperaciones.find { it.idOperacion == id }
     }
 
     override fun onDestroy() {

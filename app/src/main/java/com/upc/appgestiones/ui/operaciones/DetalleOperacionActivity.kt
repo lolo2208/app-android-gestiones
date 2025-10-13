@@ -14,11 +14,12 @@ class DetalleOperacionActivity : AppCompatActivity() {
 
         val operacion = intent.getSerializableExtra("operacion") as? Operacion
 
-        val txtNombre = findViewById<TextView>(R.id.txtNombre)
-        val txtDireccion = findViewById<TextView>(R.id.txtDireccion)
-        val txtTelefono = findViewById<TextView>(R.id.txtTelefono)
-        val txtEstado = findViewById<TextView>(R.id.txtEstado)
+        //val txtNombre = findViewById<TextView>(R.id.txtNombre)
+        //val txtDireccion = findViewById<TextView>(R.id.txtDireccion)
+        //val txtTelefono = findViewById<TextView>(R.id.txtTelefono)
+        //val txtEstado = findViewById<TextView>(R.id.txtEstado)
 
+        /*
         operacion?.let {
             txtNombre.text =
                 "${it.clienteNavigation.nombres} ${it.clienteNavigation.apellidos}"
@@ -27,5 +28,6 @@ class DetalleOperacionActivity : AppCompatActivity() {
             txtTelefono.text = "DNI: ${it.clienteNavigation.documento}"
             txtEstado.text = it.estado.name
         }
+         */
     }
 }

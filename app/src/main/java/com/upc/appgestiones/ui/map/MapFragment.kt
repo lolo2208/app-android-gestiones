@@ -21,6 +21,7 @@ import com.upc.appgestiones.core.data.model.EstadoOperacion
 import com.upc.appgestiones.core.data.model.Gestion
 import com.upc.appgestiones.core.data.model.Operacion
 import com.upc.appgestiones.core.services.MapService
+import com.upc.appgestiones.core.utils.DateUtil
 import com.upc.appgestiones.core.utils.MapUtil
 import com.upc.appgestiones.ui.formulario.FormularioActivity
 import com.upc.appgestiones.ui.home.BienvenidaViewModel
@@ -29,6 +30,8 @@ import org.osmdroid.config.Configuration
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory
 import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.MapView
+import kotlin.math.absoluteValue
+import kotlin.ranges.contains
 
 // TODO: Rename parameter arguments, choose names that match
 // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
@@ -60,7 +63,7 @@ class MapFragment : Fragment() {
                 bienvenidaViewModel.setOperaciones(listaActual)
                 operacionViewmodel.setOperaciones(listaActual)
 
-                val operacionFinalizada = listaActual.find { op -> op.id == gestion.idOperacion }
+                val operacionFinalizada = listaActual.find { op -> op.idOperacion == gestion.idOperacion }
                 if(operacionFinalizada != null) {
                     val gestionActualizada = gestion.copy(
                         operacionNavigation = operacionFinalizada!!
@@ -104,8 +107,11 @@ class MapFragment : Fragment() {
 
         // Observa operaciones y crea marcadores
         mapViewModel.operaciones.observe(viewLifecycleOwner) { lista ->
+            val listaOperaciones = lista.filter { operacion ->
+                operacion.estado != EstadoOperacion.FINALIZADA
+            }
             mapService?.addOperacionMarkers(
-                lista,
+                listaOperaciones,
                 onMarkerClick = { operacion ->
                     mapView!!.controller.setCenter(GeoPoint(operacion.direccionNavigation.latitud ?: 0.0, operacion.direccionNavigation.longitud ?: 0.0))
                     showOperacionBottomSheet(operacion)
@@ -181,14 +187,40 @@ class MapFragment : Fragment() {
         val txtDireccion = view.findViewById<TextView>(R.id.txtDireccion)
         val txtUbigeo = view.findViewById<TextView>(R.id.txtUbigeo)
         val txtReferencia = view.findViewById<TextView>(R.id.txtReferencia)
+        val txtTiempo = view.findViewById<TextView>(R.id.txtTiempo)
         val btnAccion = view.findViewById<Button>(R.id.btnAccion)
         val btnGeo = view.findViewById<Button>(R.id.btnGeolocalizar)
 
+        val diasRestantes = DateUtil.diferenciaDeFechaActual(operacion.fechaVencimiento)
+        when {
+            diasRestantes < 0 -> {
+                txtTiempo.text = buildString {
+                    append("Días de atraso: ")
+                    append(diasRestantes.absoluteValue)
+                }
+                txtTiempo.setTextColor(ContextCompat.getColor(context, R.color.card_red))
+            }
+
+            diasRestantes in 0..3 -> {
+                txtTiempo.text = buildString {
+                    append("Faltan ")
+                    append(diasRestantes)
+                    append(" día(s) para vencer")
+                }
+                txtTiempo.setTextColor(ContextCompat.getColor(context, R.color.card_orange))
+            }
+
+            else -> {
+                txtTiempo.text = "Operación al día"
+                txtTiempo.setTextColor(ContextCompat.getColor(context, R.color.card_green))
+            }
+        }
+
         txtAsunto.text = operacion.asunto
-        txtCliente.text = "${operacion.clienteNavigation.nombres} ${operacion.clienteNavigation.apellidos}"
-        txtDireccion.text = "${operacion.direccionNavigation.calle} ${operacion.direccionNavigation.numero}"
-        txtUbigeo.text = "${operacion.direccionNavigation.ciudad}, ${operacion.direccionNavigation.provincia}"
-        txtReferencia.text = operacion.direccionNavigation.referencia ?: "Sin referencia"
+        txtCliente.text = "Cliente: ${operacion.clienteNavigation.nombres} ${operacion.clienteNavigation.apellidos}"
+        txtDireccion.text = "Dirección: ${operacion.direccionNavigation.calle} ${operacion.direccionNavigation.numero}"
+        txtUbigeo.text = "Ciudad: ${operacion.direccionNavigation.ciudad}, ${operacion.direccionNavigation.provincia}"
+        txtReferencia.text = "Referencia: ${operacion.direccionNavigation.referencia ?: "Sin referencia"}"
 
         // Cambiar texto y color según el estado de la operación
         when (operacion.estado) {
@@ -209,15 +241,22 @@ class MapFragment : Fragment() {
         btnAccion.setOnClickListener {
             when (operacion.estado) {
                 EstadoOperacion.PENDIENTE -> {
-                    Toast.makeText(requireContext(), "La operación ${operacion.asunto} está en camino", Toast.LENGTH_SHORT).show()
-                    val operacionActualizada = operacion.copy(estado = EstadoOperacion.EN_RUTA)
-                    actualizarOperacionEnViewModel(operacionActualizada, mapViewModel)
-                    bottomSheet.dismiss()
+                    val operacionesActuales = operacionViewmodel.operaciones.value
+                    if(operacionesActuales?.any { operacion -> operacion.estado == EstadoOperacion.EN_RUTA }
+                            ?: true) {
+                        Toast.makeText(requireContext(), "Ya existe una operación en ruta", Toast.LENGTH_SHORT).show()
+                    }else {
+                        Toast.makeText(requireContext(), "La operación ${operacion.asunto} está en camino", Toast.LENGTH_SHORT).show()
+                        val operacionActualizada = operacion.copy(estado = EstadoOperacion.EN_RUTA)
+                        actualizarOperacionEnViewModel(operacionActualizada, mapViewModel)
+                        bottomSheet.dismiss()
+                    }
+
                 }
                 EstadoOperacion.EN_RUTA -> {
                     val intent = Intent(requireContext(), FormularioActivity::class.java)
-                    Log.d("MapFragment", "ID operacion = ${operacion.id}")
-                    intent.putExtra("ID_OPERACION", operacion.id)
+                    Log.d("MapFragment", "ID operacion = ${operacion.idOperacion}")
+                    intent.putExtra("ID_OPERACION", operacion.idOperacion)
                     formularioLauncher.launch(intent)
                 }
                 else -> {
@@ -248,7 +287,7 @@ class MapFragment : Fragment() {
     private fun actualizarOperacionEnViewModel(operacionActualizada: Operacion, mapViewModel: MapViewModel) {
         val listaActual = mapViewModel.operaciones.value ?: emptyList()
         val listaActualizada = listaActual.map {
-            if (it.id == operacionActualizada.id) operacionActualizada else it
+            if (it.idOperacion == operacionActualizada.idOperacion) operacionActualizada else it
         }
         mapViewModel.setOperaciones(listaActualizada)
         bienvenidaViewModel.setOperaciones(listaActualizada)

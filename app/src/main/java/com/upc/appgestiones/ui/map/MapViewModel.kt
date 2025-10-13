@@ -26,7 +26,7 @@ class MapViewModel : ViewModel() {
     fun manejarGestion(gestion: Gestion) : List<Operacion> {
         val listaActual = _operaciones.value?.toMutableList() ?: mutableListOf()
 
-        val index = listaActual.indexOfFirst { it.id == gestion.idOperacion }
+        val index = listaActual.indexOfFirst { it.idOperacion == gestion.idOperacion }
         if (index != -1) {
             val operacion = listaActual[index]
             val operacionFinalizada = operacion.copy(

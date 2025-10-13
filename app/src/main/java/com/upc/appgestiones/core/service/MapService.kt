@@ -11,6 +11,7 @@ import com.google.android.gms.location.*
 import com.upc.appgestiones.R
 import com.upc.appgestiones.core.data.model.EstadoOperacion
 import com.upc.appgestiones.core.data.model.Operacion
+import com.upc.appgestiones.core.utils.DateUtil
 import com.upc.appgestiones.ui.map.MapViewModel
 import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.MapView
@@ -35,15 +36,21 @@ class MapService(private val context: Context, private val mapView: MapView) {
         operaciones.forEachIndexed { index, operacion ->
             val direccion = operacion.direccionNavigation
 
-            val colorRes = when (operacion.estado) {
-                EstadoOperacion.PENDIENTE -> R.color.custom_red
-                EstadoOperacion.EN_RUTA -> R.color.custom_orange
-                EstadoOperacion.FINALIZADA -> R.color.custom_green
-                else -> R.color.black
+            val diasRestantes = DateUtil.diferenciaDeFechaActual(operacion.fechaVencimiento)
+
+
+            val colorRes = when {
+                diasRestantes < 0 -> R.color.custom_red
+                diasRestantes in 0..3 -> R.color.custom_orange
+                else -> R.color.custom_green
             }
 
             val numero = if (conNumeracion) index + 1 else null
-            val icono = createNumberedIcon(numero, colorRes)
+            val icono = createNumberedIcon(
+                numero,
+                colorRes,
+                if (operacion.estado == EstadoOperacion.EN_RUTA) R.color.nav_item_color else R.color.white
+            )
 
             val marker = Marker(mapView).apply {
                 position = GeoPoint(direccion.latitud ?: 0.0, direccion.longitud ?: 0.0)
@@ -155,13 +162,11 @@ class MapService(private val context: Context, private val mapView: MapView) {
     }
 
 
-    // Detener seguimiento en tiempo real
     fun stopLocationUpdates() {
         locationCallback?.let { fusedLocationClient.removeLocationUpdates(it) }
     }
 
 
-    // Crear icono personalizado
     private fun createCircleMarker(): BitmapDrawable {
         val size = 60
         val bitmap = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
@@ -169,7 +174,6 @@ class MapService(private val context: Context, private val mapView: MapView) {
 
         val center = size / 2f
 
-        // Círculo exterior transparente (halo)
         val haloPaint = Paint().apply {
             isAntiAlias = true
             color = Color.parseColor("#553399FF")
@@ -178,7 +182,6 @@ class MapService(private val context: Context, private val mapView: MapView) {
         val haloRadius = size / 2f
         canvas.drawCircle(center, center, haloRadius, haloPaint)
 
-        // Círculo interior sólido
         val solidPaint = Paint().apply {
             isAntiAlias = true
             color = Color.parseColor("#3399FF")
@@ -190,47 +193,53 @@ class MapService(private val context: Context, private val mapView: MapView) {
         return BitmapDrawable(context.resources, bitmap)
     }
 
-
-    private fun createNumberedIcon(number: Int?, @ColorRes colorCode: Int): BitmapDrawable {
-        val width = 120
-        val height = 120
+    private fun createNumberedIcon(number: Int?, @ColorRes colorCode: Int, @ColorRes innerColorCode: Int): BitmapDrawable {
+        val width = 100
+        val height = 100
         val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
         val canvas = Canvas(bitmap)
 
-        val centerX = width / 2f
-        val circleRadius = width / 3f
-        val circleCenterY = circleRadius + 10f
-        val pointY = height.toFloat()
-
+        //Semicirculo superior
         val paintFill = Paint().apply {
             isAntiAlias = true
             color = ContextCompat.getColor(context, colorCode)
             style = Paint.Style.FILL
         }
 
-        // Dibuja el círculo superior
-        canvas.drawCircle(centerX, circleCenterY, circleRadius, paintFill)
+        val rect = RectF(
+            10f, 0f, width.toFloat() - 10,  height.toFloat()
+        )
+        canvas.drawArc(rect, 180f, 180f, true, paintFill)
+
 
         // Dibuja la punta (más estrecha y corta)
         val path = android.graphics.Path().apply {
-            moveTo(centerX - circleRadius * 0.6f, circleCenterY) // más cerca del centro
-            lineTo(centerX + circleRadius * 0.6f, circleCenterY)
-            lineTo(centerX, pointY)
+            moveTo(10f, height.toFloat()/2)
+            lineTo(width.toFloat()/2, height.toFloat())
+            lineTo(width.toFloat() - 10, height.toFloat()/2)
             close()
         }
         canvas.drawPath(path, paintFill)
 
+
+        val innerFill = Paint().apply {
+            isAntiAlias = true
+            color = ContextCompat.getColor(context, innerColorCode)
+            style = Paint.Style.FILL
+        }
+
+        canvas.drawCircle(width.toFloat()/2, height.toFloat()/2 - 10, height.toFloat()/2 - 25, innerFill)
+
         // Texto en el centro del círculo
         number?.let {
             val paintText = Paint().apply {
-                color = Color.WHITE
+                color = Color.BLACK
                 textSize = 42f
                 typeface = android.graphics.Typeface.DEFAULT_BOLD
                 textAlign = Paint.Align.CENTER
                 isAntiAlias = true
             }
-            val textY = circleCenterY - (paintText.descent() + paintText.ascent()) / 2
-            canvas.drawText(it.toString(), centerX, textY, paintText)
+            canvas.drawText(it.toString(), width.toFloat()/2, height.toFloat()/2, paintText)
         }
 
         return BitmapDrawable(context.resources, bitmap)

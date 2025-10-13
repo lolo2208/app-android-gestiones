@@ -8,6 +8,8 @@ import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.upc.appgestiones.R
+import com.upc.appgestiones.core.data.model.Catalogo
+import com.upc.appgestiones.core.data.model.DetalleCatalogo
 import com.upc.appgestiones.core.data.model.Gestion
 
 class GestionesAdapter(
@@ -16,24 +18,22 @@ class GestionesAdapter(
 ) : RecyclerView.Adapter<GestionesAdapter.GestionViewHolder>() {
 
     inner class GestionViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        private val txtCliente: TextView = itemView.findViewById(R.id.txtCliente)
-        private val txtFecha: TextView = itemView.findViewById(R.id.txtFecha)
-        private val txtEstado: TextView = itemView.findViewById(R.id.txtEstado)
-        private val imgEvidencia: ImageView = itemView.findViewById(R.id.imgEvidencia)
+        private val txtRespuesta: TextView = itemView.findViewById(R.id.txtRespuesta)
+        private val txtCliente: TextView = itemView.findViewById(R.id.txtNombreCliente)
+        private val txtDireccion: TextView = itemView.findViewById(R.id.txtDireccion)
+        private val txtFechaRegistro: TextView = itemView.findViewById(R.id.txtFechaRegistro)
+        private val txtTipo: TextView = itemView.findViewById(R.id.txtTipo)
+        //private val imgEvidencia: ImageView = itemView.findViewById(R.id.imgEvidencia)
 
         fun bind(gestion: Gestion) {
-            txtCliente.text = "Operación: ${gestion.operacionNavigation.asunto}"
-            txtFecha.text = "Fecha: ${gestion.fechaRegistro}"
-            txtEstado.text = "Estado: ${gestion.operacionNavigation.estado}"
+            val catalogoRespuesta: Catalogo = Catalogo.fetchCatalogos().find { catalogo -> catalogo.codigoCatalogo == "RESPUESTAS_GESTION" } as Catalogo
+            val detalleRespuesta: DetalleCatalogo = catalogoRespuesta.detallesCatalogo.find { detalleCatalogo -> detalleCatalogo.codigoDetalle == gestion.respuesta } as DetalleCatalogo
 
-            // Mostrar evidencia si existe
-            if (!gestion.urlFotoEvidencia.isNullOrEmpty()) {
-                Glide.with(itemView.context)
-                    .load(gestion.urlFotoEvidencia)
-                    .into(imgEvidencia)
-            } else {
-                imgEvidencia.setImageResource(R.drawable.img_cer) // Ícono por defecto
-            }
+            txtRespuesta.text = "${ detalleRespuesta.descripcion }"
+            txtFechaRegistro.text = "Fecha: ${gestion.fechaRegistro.replace('T', ' ')}"
+            txtCliente.text = "Cliente: ${gestion.operacionNavigation.clienteNavigation.nombres} ${gestion.operacionNavigation.clienteNavigation.apellidos}"
+            txtDireccion.text = "Dirección: ${gestion.operacionNavigation.direccionNavigation.calle} ${gestion.operacionNavigation.direccionNavigation.numero}"
+            txtTipo.text = "${ gestion.operacionNavigation.tipo }"
 
             itemView.setOnClickListener {
                 onItemClick(gestion)

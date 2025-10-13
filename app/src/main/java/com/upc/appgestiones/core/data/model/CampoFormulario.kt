@@ -88,7 +88,7 @@ data class CampoFormulario(
                     tipoFormulario = "COBRANZA",
                     nombreCampo = "fechaPago",
                     etiqueta = "Fecha del pago",
-                    tipoCampo = TipoCampo.TEXT,
+                    tipoCampo = TipoCampo.FECHA,
                     esObligatorio = true
                 ),
                 CampoFormulario(
