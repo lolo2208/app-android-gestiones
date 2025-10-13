@@ -31,8 +31,8 @@ class GestionesAdapter(
 
             txtRespuesta.text = "${ detalleRespuesta.descripcion }"
             txtFechaRegistro.text = "Fecha: ${gestion.fechaRegistro.replace('T', ' ')}"
-            txtCliente.text = "Cliente: ${gestion.operacionNavigation.clienteNavigation.nombres} ${gestion.operacionNavigation.clienteNavigation.apellidos}"
-            txtDireccion.text = "Dirección: ${gestion.operacionNavigation.direccionNavigation.calle} ${gestion.operacionNavigation.direccionNavigation.numero}"
+            txtCliente.text = "Cliente: ${gestion.operacionNavigation!!.clienteNavigation.nombres} ${gestion.operacionNavigation!!.clienteNavigation.apellidos}"
+            txtDireccion.text = "Dirección: ${gestion.operacionNavigation!!.direccionNavigation.calle} ${gestion.operacionNavigation!!.direccionNavigation.numero}"
             txtTipo.text = "${ gestion.operacionNavigation.tipo }"
 
             itemView.setOnClickListener {

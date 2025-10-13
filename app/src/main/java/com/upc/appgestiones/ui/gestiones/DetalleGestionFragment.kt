@@ -55,11 +55,11 @@ class DetalleGestionFragment : Fragment() {
             txtRespuesta.text = "${obtenerDescripcionCatalogo("RespuestasGestion", it.respuesta)}"
             txtIdOperacion.text = "ID Operación: ${it.idOperacion}"
             txtFechaRegistro.text = "Fecha: ${it.fechaRegistro.replace('T', ' ')}"
-            txtEstadoOperacion.text = "Estado: ${it.operacionNavigation.estado}"
+            txtEstadoOperacion.text = "Estado: ${it.operacionNavigation!!.estado}"
             txtFormulario.text = "Formulario: ${it.formularioJson}"
-            txtNombre.text = "Cliente: ${it.operacionNavigation.clienteNavigation.nombres} ${it.operacionNavigation.clienteNavigation.apellidos}"
-            txtDireccion.text = "Dirección: ${it.operacionNavigation.direccionNavigation.calle} ${it.operacionNavigation.direccionNavigation.numero}, ${it.operacionNavigation.direccionNavigation.ciudad}"
-            txtDocumento.text = "Documento: ${it.operacionNavigation.clienteNavigation.documento}"
+            txtNombre.text = "Cliente: ${it.operacionNavigation!!.clienteNavigation.nombres} ${it.operacionNavigation!!.clienteNavigation.apellidos}"
+            txtDireccion.text = "Dirección: ${it.operacionNavigation!!.direccionNavigation.calle} ${it.operacionNavigation!!.direccionNavigation.numero}, ${it.operacionNavigation.direccionNavigation.ciudad}"
+            txtDocumento.text = "Documento: ${it.operacionNavigation!!.clienteNavigation.documento}"
             txtIdOperacion.text = "ID Operacion: ${it.idOperacion}"
 
 
@@ -108,7 +108,7 @@ class DetalleGestionFragment : Fragment() {
 
         val json = try { JSONObject(gestion.formularioJson) } catch (e: Exception) { JSONObject() }
 
-        val tipoFormulario = when (gestion.operacionNavigation.tipo) {
+        val tipoFormulario = when (gestion.operacionNavigation!!.tipo) {
             TipoOperacion.COBRANZA -> "COBRANZA"
             TipoOperacion.VERIFICACION -> "VERIFICACION"
             else -> "COBRANZA"

@@ -31,7 +31,7 @@ class DetalleGestionActivity : AppCompatActivity() {
             txtIdGestion.text = "ID Gestión: ${it.idGestion}"
             txtIdOperacion.text = "ID Operación: ${it.idOperacion}"
             txtFechaRegistro.text = "Fecha: ${it.fechaRegistro}"
-            txtEstadoOperacion.text = "Estado: ${it.operacionNavigation.estado}"
+            txtEstadoOperacion.text = "Estado: ${it.operacionNavigation!!.estado}"
             txtFormulario.text = "Formulario: ${it.formularioJson}"
 
             if (!it.urlFotoEvidencia.isNullOrEmpty()) {

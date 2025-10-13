@@ -12,7 +12,7 @@ data class Gestion(
     val urlGrabacionVoz: String? = null,
     val urlFotoEvidencia: String? = null,
     val observacion: String? = null,
-    val operacionNavigation: Operacion
+    val operacionNavigation: Operacion?
 ) : Serializable {
 
     companion object {

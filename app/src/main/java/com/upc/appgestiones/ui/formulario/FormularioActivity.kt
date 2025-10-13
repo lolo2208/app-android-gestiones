@@ -5,28 +5,22 @@ import android.graphics.Typeface
 import android.net.Uri
 import android.os.Bundle
 import android.util.Log
-import android.view.ContextThemeWrapper
 import android.view.View
 import android.widget.*
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
-import com.upc.appgestiones.R
-import com.upc.appgestiones.core.data.model.CampoFormulario
-import com.upc.appgestiones.core.data.model.Catalogo
-import com.upc.appgestiones.core.data.model.Gestion
-import com.upc.appgestiones.core.data.model.Operacion
-import com.upc.appgestiones.core.data.model.TipoCampo
-import java.io.File
 import com.google.gson.Gson
 import com.jakewharton.threetenabp.AndroidThreeTen
+import com.upc.appgestiones.R
 import com.upc.appgestiones.core.audio.AudioRecorderService
+import com.upc.appgestiones.core.data.model.*
 import org.threeten.bp.LocalDateTime
+import java.io.File
 
 class FormularioActivity : AppCompatActivity() {
 
@@ -37,23 +31,23 @@ class FormularioActivity : AppCompatActivity() {
 
     private var currentPhotoCampo: String? = null
     private var currentPhotoUri: Uri? = null
+    private var currentPhotoPath: String? = null
 
     private lateinit var audioRecorder: AudioRecorderService
     private var audioPath: String? = null
-
-    private lateinit var imgEvidencia: ImageView
-
-    private var evidenciaUri: Uri? = null
 
     private val takePictureLauncher =
         registerForActivityResult(ActivityResultContracts.TakePicture()) { success ->
             if (success && currentPhotoCampo != null && currentPhotoUri != null) {
                 val campo = currentPhotoCampo!!
-                val imageView = respuestas[campo] as? ImageView
-                if (imageView != null) {
-                    imageView.setImageURI(currentPhotoUri)
-                    imageView.visibility = ImageView.VISIBLE
-                    imageView.tag = currentPhotoUri.toString()
+                respuestas[campo] = currentPhotoPath
+                Log.d("FormularioActivity", "Foto guardada en: $currentPhotoPath")
+
+                // Mostrar la imagen en el ImageView correspondiente
+                val imageView = containerFormulario.findViewWithTag<ImageView>(campo)
+                imageView?.apply {
+                    setImageURI(currentPhotoUri)
+                    visibility = View.VISIBLE
                 }
             }
         }
@@ -62,15 +56,15 @@ class FormularioActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContentView(R.layout.activity_formulario)
-
         AndroidThreeTen.init(this)
 
         containerFormulario = findViewById(R.id.containerFormulario)
-        val btnGuardar: Button = findViewById(R.id.btnEnviarFormulario)
+        val btnEnviarFormulario: Button = findViewById(R.id.btnEnviarFormulario)
 
         operacionId = intent.getIntExtra("ID_OPERACION", -1)
         Log.d("FormularioActivity", "Recibiendo ID de Operación: $operacionId")
 
+        // Iniciar grabadora de audio
         audioRecorder = AudioRecorderService(this)
         if (audioRecorder.verificarAccesoAlMicro()) {
             audioRecorder.iniciarGrabacion()
@@ -80,7 +74,7 @@ class FormularioActivity : AppCompatActivity() {
             Log.e("FormularioActivity", "No se tienen permisos de grabación")
         }
 
-
+        // Crear formulario
         if (operacionId != -1) {
             val operacion = fetchOperacionById(operacionId)
 
@@ -88,54 +82,43 @@ class FormularioActivity : AppCompatActivity() {
                 agregarCamposFijos()
 
                 val tipoOperacion = operacion.tipo
-
                 val campos = CampoFormulario.fetchCampos()
                     .filter { it.tipoFormulario == tipoOperacion.toString() }
 
-                if (campos.isNotEmpty()) {
-                    crearCamposDinamicos(campos)
-                }
-
-                btnGuardar.setOnClickListener {
-                    val resultados = mutableMapOf<String, Any?>()
-
-                    for ((campo, view) in respuestas) {
-                        when (view) {
-                            is EditText -> resultados[campo] = view.text.toString().trim()
-                            is Spinner -> resultados[campo] = view.selectedItem?.toString()
-                            is ImageView -> resultados[campo] = view.tag
-                        }
-                    }
-
-                    val operacion = fetchOperacionById(operacionId)!!
-                    val gestion = Gestion(
-                        idGestion = (0..999999).random(),
-                        idOperacion = operacion.idOperacion,
-                        fechaRegistro = LocalDateTime.now().toString(),
-                        formularioJson = Gson().toJson(resultados),
-                        urlGrabacionVoz = audioPath,
-                        urlFotoEvidencia = evidenciaUri?.toString(),
-                        respuesta = "",
-                        operacionNavigation = operacion
-                    )
-
-
-                    audioRecorder.finalizarGrabacion()
-
-                    val gson = Gson()
-                    val gestionJson = gson.toJson(gestion)
-
-                    val resultIntent = Intent().apply {
-                        putExtra("GESTION_JSON", gestionJson)
-                    }
-                    setResult(RESULT_OK, resultIntent)
-                    finish()
-                }
+                if (campos.isNotEmpty()) crearCamposDinamicos(campos)
             } else {
                 Log.e("FormularioActivity", "Operación no encontrada para el ID: $operacionId")
             }
         }
 
+        // Guardar formulario
+        btnEnviarFormulario.setOnClickListener {
+            val resultados = mutableMapOf<String, Any?>()
+            for ((campo, valor) in respuestas) {
+                when (valor) {
+                    is EditText -> resultados[campo] = valor.text.toString().trim()
+                    is Spinner -> resultados[campo] = valor.selectedItem?.toString()
+                    is String -> resultados[campo] = valor
+                }
+            }
+
+            audioRecorder.finalizarGrabacion()
+
+            val gestion = crearGestionDesdeFormulario(
+                idOperacion = operacionId,
+                respuestasFormulario = resultados,
+                audioPath = audioPath
+            )
+
+            val gestionJson = Gson().toJson(gestion)
+            val resultIntent = Intent().apply {
+                putExtra("GESTION_JSON", gestionJson)
+            }
+            setResult(RESULT_OK, resultIntent)
+            finish()
+        }
+
+        // Ajuste de márgenes
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.rootLayout)) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
@@ -143,21 +126,11 @@ class FormularioActivity : AppCompatActivity() {
         }
     }
 
+    // ================= CAMPOS FIJOS =================
     private fun agregarCamposFijos() {
-        //crear spinner de respuesta
-        val labelRespuesta = TextView(this).apply {
-            text = "Respuesta de la gestión"
-            textSize = 16f
-            setTypeface(typeface, Typeface.BOLD)
-            setPadding(0, 24, 0, 8)
-        }
+        // === RESPUESTA DE GESTIÓN ===
+        val labelRespuesta = crearLabel("Respuesta de la gestión")
         containerFormulario.addView(labelRespuesta)
-
-        val catalogo = Catalogo.fetchCatalogos()
-            .find { it.nombreCatalogo == "RespuestasGestion" }
-
-        val detalles = catalogo?.detallesCatalogo ?: emptyList()
-        val items = detalles.map { it.descripcion }
 
         val textInputLayoutRespuesta = com.google.android.material.textfield.TextInputLayout(this).apply {
             layoutParams = LinearLayout.LayoutParams(
@@ -165,9 +138,16 @@ class FormularioActivity : AppCompatActivity() {
                 LinearLayout.LayoutParams.WRAP_CONTENT
             ).apply { bottomMargin = 32 }
 
-            hint = "Selecciona una opción"
+            hint = "Respuesta de la gestión"
+            isHintEnabled = true
             setBoxBackgroundMode(com.google.android.material.textfield.TextInputLayout.BOX_BACKGROUND_OUTLINE)
+            setBoxStrokeColor(ContextCompat.getColor(context, R.color.custom_primary))
+            setBoxCornerRadii(16f, 16f, 16f, 16f)
         }
+
+        val catalogo = Catalogo.fetchCatalogos().find { it.nombreCatalogo == "RespuestasGestion" }
+        val detalles = catalogo?.detallesCatalogo ?: emptyList()
+        val items = detalles.map { it.descripcion }
 
         val spinnerRespuesta = Spinner(this, Spinner.MODE_DROPDOWN).apply {
             layoutParams = LinearLayout.LayoutParams(
@@ -175,21 +155,16 @@ class FormularioActivity : AppCompatActivity() {
                 LinearLayout.LayoutParams.WRAP_CONTENT
             )
             background = ContextCompat.getDrawable(context, R.drawable.bg_spinner_outlined)
-            adapter = ArrayAdapter(
-                context,
-                android.R.layout.simple_spinner_dropdown_item,
-                items
-            )
+            adapter = ArrayAdapter(context, android.R.layout.simple_spinner_dropdown_item, items)
         }
 
         textInputLayoutRespuesta.addView(spinnerRespuesta)
         containerFormulario.addView(textInputLayoutRespuesta)
-
-        respuestas["respuesta_gestion"] = items[0]
+        respuestas["respuesta_gestion"] = detalles.firstOrNull()?.codigoDetalle ?: ""
 
         spinnerRespuesta.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
-            override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
-                respuestas["respuesta_gestion"] = items[position]
+            override fun onItemSelected(parent: AdapterView<*>?, view: View?, pos: Int, id: Long) {
+                respuestas["respuesta_gestion"] = detalles[pos].codigoDetalle
             }
 
             override fun onNothingSelected(parent: AdapterView<*>?) {
@@ -197,17 +172,12 @@ class FormularioActivity : AppCompatActivity() {
             }
         }
 
-        //Crear campo de evidencia
-        val labelEvidencia = TextView(this).apply {
-            text = "Evidencia de gestión"
-            textSize = 16f
-            setTypeface(typeface, Typeface.BOLD)
-            setPadding(0, 24, 0, 8)
-        }
-        containerFormulario.addView(labelEvidencia)
+        // === EVIDENCIA DE GESTIÓN ===
+        val labelFoto = crearLabel("Evidencia de gestión")
+        containerFormulario.addView(labelFoto)
 
         val buttonFoto = Button(this).apply {
-            text = "Subir Evidencia"
+            text = "Subir evidencia"
             layoutParams = LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT
@@ -215,67 +185,62 @@ class FormularioActivity : AppCompatActivity() {
         }
         containerFormulario.addView(buttonFoto)
 
-        val imageViewEvidencia = ImageView(this).apply {
+        val imageView = ImageView(this).apply {
             layoutParams = LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 600
             ).apply { bottomMargin = 32 }
             scaleType = ImageView.ScaleType.CENTER_CROP
-            visibility = ImageView.GONE
+            visibility = View.GONE
+            tag = "foto_evidencia_gestion"
+            setPadding(8, 8, 8, 8)
         }
-        containerFormulario.addView(imageViewEvidencia)
+        containerFormulario.addView(imageView)
 
-        respuestas["foto_evidencia_gestion"] = imageViewEvidencia
+        respuestas["foto_evidencia_gestion"] = null
 
         buttonFoto.setOnClickListener {
             currentPhotoCampo = "foto_evidencia_gestion"
-            currentPhotoUri = createImageUri("foto_evidencia_gestion")
-            takePictureLauncher.launch(currentPhotoUri!!)
+            val (uri, path) = createImageFile("foto_evidencia_gestion")
+            currentPhotoUri = uri
+            currentPhotoPath = path
+            takePictureLauncher.launch(uri)
         }
 
-        //CRear campo observación
-        val labelObservacion = TextView(this).apply {
-            text = "Observación"
-            textSize = 16f
-            setTypeface(typeface, Typeface.BOLD)
-            setPadding(0, 24, 0, 8)
-        }
+        // === OBSERVACIÓN ===
+        val labelObservacion = crearLabel("Observación de la gestión")
         containerFormulario.addView(labelObservacion)
 
-        val textInputLayoutObservacion = com.google.android.material.textfield.TextInputLayout(this).apply {
+        val textInputLayoutObs = com.google.android.material.textfield.TextInputLayout(this).apply {
             layoutParams = LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT
             ).apply { bottomMargin = 32 }
 
-            hint = "Ingrese su observación"
+            hint = "Observación"
+            isHintEnabled = true
             setBoxBackgroundMode(com.google.android.material.textfield.TextInputLayout.BOX_BACKGROUND_OUTLINE)
+            setBoxStrokeColor(ContextCompat.getColor(context, R.color.custom_primary))
+            setBoxCornerRadii(16f, 16f, 16f, 16f)
         }
 
-        val editTextObservacion = com.google.android.material.textfield.TextInputEditText(textInputLayoutObservacion.context).apply {
-            layoutParams = LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT
-            )
-            inputType = android.text.InputType.TYPE_CLASS_TEXT or android.text.InputType.TYPE_TEXT_FLAG_MULTI_LINE
+        val editTextObs = com.google.android.material.textfield.TextInputEditText(textInputLayoutObs.context).apply {
             minLines = 3
-            maxLines = 5
+            maxLines = 6
+            setPadding(24, 24, 24, 24)
+            background = null
+            inputType = android.text.InputType.TYPE_CLASS_TEXT or android.text.InputType.TYPE_TEXT_FLAG_MULTI_LINE
         }
 
-        textInputLayoutObservacion.addView(editTextObservacion)
-        containerFormulario.addView(textInputLayoutObservacion)
-
-        respuestas["observacion_gestion"] = editTextObservacion
+        textInputLayoutObs.addView(editTextObs)
+        containerFormulario.addView(textInputLayoutObs)
+        respuestas["observacion_gestion"] = editTextObs
     }
 
+    // ================= CAMPOS DINÁMICOS =================
     private fun crearCamposDinamicos(campos: List<CampoFormulario>) {
         for (campo in campos) {
-            val label = TextView(this).apply {
-                text = campo.etiqueta
-                textSize = 16f
-                setTypeface(typeface, Typeface.BOLD)
-                setPadding(0, 24, 0, 8)
-            }
+            val label = crearLabel(campo.etiqueta)
             containerFormulario.addView(label)
 
             when (campo.tipoCampo) {
@@ -285,31 +250,19 @@ class FormularioActivity : AppCompatActivity() {
                             LinearLayout.LayoutParams.MATCH_PARENT,
                             LinearLayout.LayoutParams.WRAP_CONTENT
                         ).apply { bottomMargin = 32 }
-
                         hint = campo.etiqueta
                         setBoxBackgroundMode(com.google.android.material.textfield.TextInputLayout.BOX_BACKGROUND_OUTLINE)
+                        setBoxStrokeColor(ContextCompat.getColor(context, R.color.custom_primary))
                     }
 
-                    val editText = com.google.android.material.textfield.TextInputEditText(textInputLayout.context).apply {
-                        layoutParams = LinearLayout.LayoutParams(
-                            LinearLayout.LayoutParams.MATCH_PARENT,
-                            LinearLayout.LayoutParams.WRAP_CONTENT
-                        )
-                        inputType = android.text.InputType.TYPE_CLASS_TEXT
-                    }
-
+                    val editText = com.google.android.material.textfield.TextInputEditText(textInputLayout.context)
                     textInputLayout.addView(editText)
-
                     containerFormulario.addView(textInputLayout)
-
                     respuestas[campo.nombreCampo] = editText
                 }
 
-
                 TipoCampo.SELECT -> {
-                    val catalogo = Catalogo.fetchCatalogos()
-                        .find { it.nombreCatalogo == campo.nombreCatalogo }
-
+                    val catalogo = Catalogo.fetchCatalogos().find { it.nombreCatalogo == campo.nombreCatalogo }
                     val detalles = catalogo?.detallesCatalogo ?: emptyList()
                     val items = detalles.map { it.descripcion }
 
@@ -318,10 +271,9 @@ class FormularioActivity : AppCompatActivity() {
                             LinearLayout.LayoutParams.MATCH_PARENT,
                             LinearLayout.LayoutParams.WRAP_CONTENT
                         ).apply { bottomMargin = 32 }
-
                         hint = campo.etiqueta
-                        isHintEnabled = true
                         setBoxBackgroundMode(com.google.android.material.textfield.TextInputLayout.BOX_BACKGROUND_OUTLINE)
+                        setBoxStrokeColor(ContextCompat.getColor(context, R.color.custom_primary))
                     }
 
                     val spinner = Spinner(this, Spinner.MODE_DROPDOWN).apply {
@@ -330,56 +282,32 @@ class FormularioActivity : AppCompatActivity() {
                             LinearLayout.LayoutParams.WRAP_CONTENT
                         )
                         background = ContextCompat.getDrawable(context, R.drawable.bg_spinner_outlined)
-
-                        adapter = ArrayAdapter(
-                            context,
-                            android.R.layout.simple_spinner_dropdown_item,
-                            items
-                        )
+                        adapter = ArrayAdapter(context, android.R.layout.simple_spinner_dropdown_item, items)
                     }
 
-                    val container = FrameLayout(this).apply {
-                        layoutParams = FrameLayout.LayoutParams(
-                            FrameLayout.LayoutParams.MATCH_PARENT,
-                            FrameLayout.LayoutParams.WRAP_CONTENT
-                        )
-                        setPadding(0, 8, 0, 8)
-                        addView(spinner)
-                    }
-
-                    textInputLayout.addView(container)
+                    textInputLayout.addView(spinner)
                     containerFormulario.addView(textInputLayout)
-
-                    if (detalles.isNotEmpty()) {
-                        respuestas[campo.nombreCampo] = detalles[0].codigoDetalle
-                    }
+                    respuestas[campo.nombreCampo] = detalles.firstOrNull()?.codigoDetalle ?: ""
 
                     spinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
-                        override fun onItemSelected(
-                            parent: AdapterView<*>?,
-                            view: View?,
-                            position: Int,
-                            id: Long
-                        ) {
-                            respuestas[campo.nombreCampo] = detalles[position].codigoDetalle
+                        override fun onItemSelected(parent: AdapterView<*>?, view: View?, pos: Int, id: Long) {
+                            respuestas[campo.nombreCampo] = detalles[pos].codigoDetalle
                         }
-
                         override fun onNothingSelected(parent: AdapterView<*>?) {
                             respuestas[campo.nombreCampo] = null
                         }
                     }
                 }
 
-
                 TipoCampo.FOTO -> {
-                    val button = Button(this).apply {
+                    val btn = Button(this).apply {
                         text = "Subir ${campo.etiqueta}"
                         layoutParams = LinearLayout.LayoutParams(
                             LinearLayout.LayoutParams.MATCH_PARENT,
                             LinearLayout.LayoutParams.WRAP_CONTENT
                         ).apply { bottomMargin = 16 }
                     }
-                    containerFormulario.addView(button)
+                    containerFormulario.addView(btn)
 
                     val imageView = ImageView(this).apply {
                         layoutParams = LinearLayout.LayoutParams(
@@ -387,16 +315,19 @@ class FormularioActivity : AppCompatActivity() {
                             600
                         ).apply { bottomMargin = 32 }
                         scaleType = ImageView.ScaleType.CENTER_CROP
-                        visibility = ImageView.GONE
+                        visibility = View.GONE
+                        tag = campo.nombreCampo
                     }
                     containerFormulario.addView(imageView)
 
-                    respuestas[campo.nombreCampo] = imageView
+                    respuestas[campo.nombreCampo] = null
 
-                    button.setOnClickListener {
+                    btn.setOnClickListener {
                         currentPhotoCampo = campo.nombreCampo
-                        currentPhotoUri = createImageUri(campo.nombreCampo)
-                        takePictureLauncher.launch(currentPhotoUri!!)
+                        val (uri, path) = createImageFile(campo.nombreCampo)
+                        currentPhotoUri = uri
+                        currentPhotoPath = path
+                        takePictureLauncher.launch(uri)
                     }
                 }
 
@@ -406,28 +337,20 @@ class FormularioActivity : AppCompatActivity() {
                             LinearLayout.LayoutParams.MATCH_PARENT,
                             LinearLayout.LayoutParams.WRAP_CONTENT
                         ).apply { bottomMargin = 32 }
-
                         hint = campo.etiqueta
                         setBoxBackgroundMode(com.google.android.material.textfield.TextInputLayout.BOX_BACKGROUND_OUTLINE)
                         setStartIconDrawable(R.drawable.ic_calendar)
                     }
 
                     val editText = com.google.android.material.textfield.TextInputEditText(textInputLayout.context).apply {
-                        layoutParams = LinearLayout.LayoutParams(
-                            LinearLayout.LayoutParams.MATCH_PARENT,
-                            LinearLayout.LayoutParams.WRAP_CONTENT
-                        )
-                        inputType = android.text.InputType.TYPE_NULL
                         isFocusable = false
                         isClickable = true
-
                         setOnClickListener {
                             val calendar = java.util.Calendar.getInstance()
                             val datePicker = android.app.DatePickerDialog(
                                 context,
-                                { _, year, month, dayOfMonth ->
-                                    val selectedDate = String.format("%02d/%02d/%04d", dayOfMonth, month + 1, year)
-                                    setText(selectedDate)
+                                { _, year, month, day ->
+                                    setText(String.format("%02d/%02d/%04d", day, month + 1, year))
                                 },
                                 calendar.get(java.util.Calendar.YEAR),
                                 calendar.get(java.util.Calendar.MONTH),
@@ -436,40 +359,52 @@ class FormularioActivity : AppCompatActivity() {
                             datePicker.show()
                         }
                     }
-
                     textInputLayout.addView(editText)
-
                     containerFormulario.addView(textInputLayout)
-
                     respuestas[campo.nombreCampo] = editText
                 }
             }
         }
     }
 
-    private fun createImageUri(nombreCampo: String): Uri {
-        val imageFile = File.createTempFile(
-            "IMG_${nombreCampo}_",
-            ".jpg",
-            cacheDir
-        )
-        return FileProvider.getUriForFile(
-            this,
-            "${packageName}.provider",
-            imageFile
+    private fun crearLabel(texto: String) = TextView(this).apply {
+        text = texto
+        textSize = 16f
+        setTypeface(typeface, Typeface.BOLD)
+        setPadding(0, 24, 0, 8)
+    }
+
+    private fun createImageFile(nombreCampo: String): Pair<Uri, String> {
+        val file = File.createTempFile("IMG_${nombreCampo}_", ".jpg", cacheDir)
+        val uri = FileProvider.getUriForFile(this, "$packageName.provider", file)
+        return uri to file.absolutePath
+    }
+
+    private fun crearGestionDesdeFormulario(
+        idOperacion: Int,
+        respuestasFormulario: Map<String, Any?>,
+        audioPath: String?
+    ): Gestion {
+        val formularioJson = Gson().toJson(respuestasFormulario)
+        return Gestion(
+            idGestion = (0..999999).random(),
+            idOperacion = idOperacion,
+            fechaRegistro = LocalDateTime.now().toString(),
+            respuesta = respuestasFormulario["respuesta_gestion"]?.toString() ?: "",
+            formularioJson = formularioJson,
+            urlGrabacionVoz = audioPath,
+            urlFotoEvidencia = respuestasFormulario["foto_evidencia_gestion"]?.toString(),
+            observacion = respuestasFormulario["observacion_gestion"]?.toString() ?: "",
+            operacionNavigation = null
         )
     }
 
     private fun fetchOperacionById(id: Int): Operacion? {
-        val listaDeOperaciones = Operacion.fetchOperaciones()
-        return listaDeOperaciones.find { it.idOperacion == id }
+        return Operacion.fetchOperaciones().find { it.idOperacion == id }
     }
 
     override fun onDestroy() {
         super.onDestroy()
-        if (::audioRecorder.isInitialized) {
-            audioRecorder.finalizarGrabacion()
-            Log.d("FormularioActivity", "Grabación detenida en onDestroy()")
-        }
+        if (::audioRecorder.isInitialized) audioRecorder.finalizarGrabacion()
     }
 }
