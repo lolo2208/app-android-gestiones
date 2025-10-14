@@ -5,14 +5,20 @@ import android.content.Context
 import android.graphics.*
 import android.graphics.drawable.BitmapDrawable
 import android.location.Location
+import android.util.Log
 import androidx.annotation.ColorRes
 import androidx.core.content.ContextCompat
+import com.android.volley.Request
+import com.android.volley.toolbox.JsonObjectRequest
+import com.android.volley.toolbox.StringRequest
+import com.android.volley.toolbox.Volley
 import com.google.android.gms.location.*
 import com.upc.appgestiones.R
 import com.upc.appgestiones.core.data.model.EstadoOperacion
 import com.upc.appgestiones.core.data.model.Operacion
 import com.upc.appgestiones.core.utils.DateUtil
 import com.upc.appgestiones.ui.map.MapViewModel
+import org.json.JSONObject
 import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.MapView
 import org.osmdroid.views.overlay.Marker
@@ -309,4 +315,86 @@ class MapService(private val context: Context, private val mapView: MapView) {
         return BitmapDrawable(context.resources, bitmap)
     }
 
+    fun drawRutaOptima(points: List<GeoPoint>) {
+        if (points.size < 2) {
+            Log.e("MapService", "Se necesitan al menos 2 puntos para trazar una ruta.")
+            return
+        }
+
+        val coordinates = points.joinToString(";") { "${it.longitude},${it.latitude}" }
+
+        val url =
+            "https://router.project-osrm.org/route/v1/driving/$coordinates?overview=full&geometries=geojson"
+
+        val queue = Volley.newRequestQueue(context)
+
+        val stringRequest = StringRequest(
+            Request.Method.GET, url,
+            { response ->
+                try {
+                    val json = JSONObject(response)
+                    if (json.optString("code") != "Ok") {
+                        Log.e("MapService", "Error en respuesta OSRM: ${json.optString("code")}")
+                        return@StringRequest
+                    }
+
+                    val routes = json.getJSONArray("routes")
+                    if (routes.length() == 0) {
+                        Log.e("MapService", "No se encontró ruta entre los puntos.")
+                        return@StringRequest
+                    }
+
+                    val geometry = routes.getJSONObject(0).getJSONObject("geometry")
+                    val coordinatesArray = geometry.getJSONArray("coordinates")
+
+                    val geoPoints = mutableListOf<GeoPoint>()
+                    for (i in 0 until coordinatesArray.length()) {
+                        val coord = coordinatesArray.getJSONArray(i)
+                        val lon = coord.getDouble(0)
+                        val lat = coord.getDouble(1)
+                        geoPoints.add(GeoPoint(lat, lon))
+                    }
+
+                    drawPolyline(geoPoints)
+
+                } catch (e: Exception) {
+                    Log.e("MapService", "Error al procesar respuesta: ${e.message}", e)
+                }
+            },
+            { error ->
+                Log.e("MapService", "Error en la petición OSRM: ${error.message}", error)
+            }
+        )
+
+        queue.add(stringRequest)
+    }
+
+    fun drawPolyline(puntos: List<GeoPoint>) {
+        if (puntos.size < 2) return
+
+        mapView.overlays.removeAll { it is Polyline }
+
+        val colores = listOf(
+            ContextCompat.getColor(context, R.color.route_1),
+            ContextCompat.getColor(context, R.color.route_2),
+            ContextCompat.getColor(context, R.color.route_3),
+            ContextCompat.getColor(context, R.color.route_4),
+        )
+
+        for (i in 0 until puntos.size - 1) {
+            val inicio = puntos[i]
+            val fin = puntos[i + 1]
+
+            val polyline = Polyline().apply {
+                addPoint(inicio)
+                addPoint(fin)
+                outlinePaint.color = colores[i % colores.size]
+                outlinePaint.strokeWidth = 10f
+            }
+
+            mapView.overlays.add(0, polyline)
+        }
+
+        mapView.invalidate()
+    }
 }

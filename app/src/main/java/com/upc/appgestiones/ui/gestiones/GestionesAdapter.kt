@@ -23,6 +23,8 @@ class GestionesAdapter(
         private val txtDireccion: TextView = itemView.findViewById(R.id.txtDireccion)
         private val txtFechaRegistro: TextView = itemView.findViewById(R.id.txtFechaRegistro)
         private val txtTipo: TextView = itemView.findViewById(R.id.txtTipo)
+
+        private val txtIdOperacion: TextView = itemView.findViewById(R.id.txtIdOperacion)
         //private val imgEvidencia: ImageView = itemView.findViewById(R.id.imgEvidencia)
 
         fun bind(gestion: Gestion) {
@@ -34,6 +36,7 @@ class GestionesAdapter(
             txtCliente.text = "Cliente: ${gestion.operacionNavigation!!.clienteNavigation.nombres} ${gestion.operacionNavigation!!.clienteNavigation.apellidos}"
             txtDireccion.text = "Dirección: ${gestion.operacionNavigation!!.direccionNavigation.calle} ${gestion.operacionNavigation!!.direccionNavigation.numero}"
             txtTipo.text = "${ gestion.operacionNavigation.tipo }"
+            txtIdOperacion.text = "${gestion.idOperacion}"
 
             itemView.setOnClickListener {
                 onItemClick(gestion)

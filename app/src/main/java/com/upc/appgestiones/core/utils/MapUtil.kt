@@ -43,7 +43,7 @@ class MapUtil {
                 puntoActual = GeoPoint(lat, lon)
             }
 
-            ordenadas.addAll(finalizadas)
+            //ordenadas.addAll(finalizadas)
 
             return ordenadas
         }

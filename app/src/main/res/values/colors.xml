@@ -16,4 +16,9 @@
     <color name="location">#48cae4</color>
     <color name="nav_item_color">#48cae4</color>
     <color name="outline_color">#BDBDBD</color>
+    <color name="route_1">#4CAF50</color>
+    <color name="route_2">#673AB7</color>
+    <color name="route_3">#FF5722</color>
+    <color name="route_4">#03A9F4</color>
+
 </resources>

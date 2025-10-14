@@ -148,7 +148,17 @@ class MapFragment : Fragment() {
                     )
                     mapViewModel.setOperaciones(operacionesOrdenadas)
 
-                    mapService?.drawRutaOptimaConExtremos(operacionesOrdenadas)
+                    val puntos: MutableList<GeoPoint> = mutableListOf()
+                    puntos.add(ubicacionActual)
+                    operacionesOrdenadas.forEach { operacion ->
+                        val lat = operacion.direccionNavigation.latitud
+                        val lon = operacion.direccionNavigation.longitud
+                        if (lat != null && lon != null) {
+                            puntos.add(GeoPoint(lat, lon))
+                        }
+                    }
+
+                    mapService?.drawRutaOptima(puntos)
                 },
                 onFailure = { e ->
                     Toast.makeText(context, "No se pudo obtener la ubicación: ${e.message}", Toast.LENGTH_SHORT).show()
