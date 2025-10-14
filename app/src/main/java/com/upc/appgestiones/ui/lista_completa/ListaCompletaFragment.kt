@@ -57,7 +57,7 @@ class ListaCompletaFragment : Fragment() {
 
         cargarGestiones(Gestion.fetchGestionesFinalizadas())
 
-        //Accion del buscador
+
         val edtBuscar: TextInputEditText = view.findViewById(R.id.edtBuscarGestion);
         edtBuscar.addTextChangedListener(object : TextWatcher {
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
