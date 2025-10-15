@@ -168,3 +168,23 @@ fun detalleCatalogoToJson(d: DetalleCatalogo): JSONObject {
         put("descripcion", d.descripcion)
     }
 }
+
+fun usuarioFromJson(json: JSONObject): Usuario {
+    return Usuario(
+        idUsuario = json.optInt("idUsuario"),
+        username = json.optString("username"),
+        password = json.optString("password"),
+        nombres = json.optString("nombres"),
+        apellidos = json.optString("apellidos")
+    )
+}
+
+fun usuarioToJson(u: Usuario): JSONObject {
+    return JSONObject().apply {
+        put("idUsuario", u.idUsuario)
+        put("username", u.username)
+        put("password", u.password)
+        put("nombres", u.nombres)
+        put("apellidos", u.apellidos)
+    }
+}

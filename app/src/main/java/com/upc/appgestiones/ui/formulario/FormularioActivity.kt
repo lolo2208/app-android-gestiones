@@ -19,6 +19,7 @@ import com.jakewharton.threetenabp.AndroidThreeTen
 import com.upc.appgestiones.R
 import com.upc.appgestiones.core.audio.AudioRecorderService
 import com.upc.appgestiones.core.data.model.*
+import com.upc.appgestiones.core.data.repository.DetalleCatalogoRepository
 import com.upc.appgestiones.core.data.repository.GestionRepository
 import org.threeten.bp.LocalDateTime
 import java.io.File
@@ -36,6 +37,10 @@ class FormularioActivity : AppCompatActivity() {
 
     private lateinit var audioRecorder: AudioRecorderService
     private var audioPath: String? = null
+
+    private lateinit var detalleCatalogoRepo: DetalleCatalogoRepository
+
+    private var listaDetallesCatalogo: List<DetalleCatalogo> = emptyList()
 
     private val takePictureLauncher =
         registerForActivityResult(ActivityResultContracts.TakePicture()) { success ->
@@ -62,6 +67,8 @@ class FormularioActivity : AppCompatActivity() {
         containerFormulario = findViewById(R.id.containerFormulario)
         val btnEnviarFormulario: Button = findViewById(R.id.btnEnviarFormulario)
 
+        detalleCatalogoRepo = DetalleCatalogoRepository(this)
+
         val operacionJson = intent.getStringExtra("OPERACION_JSON")
         val operacion = operacionJson?.let { Gson().fromJson(it, Operacion::class.java) }
 
@@ -84,17 +91,28 @@ class FormularioActivity : AppCompatActivity() {
         }
 
         if (operacionId > 0) {
-            if (operacion != null) {
-                agregarCamposFijos()
+            detalleCatalogoRepo.getDetalleCatalogos(
+                onSuccess = { detalles ->
+                    listaDetallesCatalogo = detalles
+                    agregarCamposFijos()
 
-                val tipoOperacion = operacion.tipo
-                val campos = CampoFormulario.fetchCampos()
-                    .filter { it.tipoFormulario == tipoOperacion.toString() }
+                    if (operacion != null) {
+                        agregarCamposFijos()
 
-                if (campos.isNotEmpty()) crearCamposDinamicos(campos)
-            } else {
-                Log.e("FormularioActivity", "Operación no encontrada para el ID: $operacionId")
-            }
+                        val tipoOperacion = operacion.tipo
+                        val campos = CampoFormulario.fetchCampos()
+                            .filter { it.tipoFormulario == tipoOperacion.toString() }
+
+                        if (campos.isNotEmpty()) crearCamposDinamicos(campos)
+                    } else {
+                        Log.e("FormularioActivity", "Operación no encontrada para el ID: $operacionId")
+                    }
+                },
+                onError = { error ->
+                    Toast.makeText(this, "Error al obtener catálogos: ${error.message}", Toast.LENGTH_LONG).show()
+                    agregarCamposFijos() // Crea al menos los fijos
+                }
+            )
         }
 
         btnEnviarFormulario.setOnClickListener {

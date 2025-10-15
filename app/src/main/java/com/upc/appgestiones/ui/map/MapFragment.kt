@@ -111,7 +111,7 @@ class MapFragment : Fragment() {
         btnRuta.setOnClickListener {
             mapService?.getCurrentLocation(
                 onSuccess = { ubicacionActual ->
-                    operacionRepo.listarOperaciones { operaciones, error ->
+                    operacionRepo.listarOperacionesPorUsuario { operaciones, error ->
                         if (operaciones != null) {
                             val operacionesFiltradas = operaciones.filter { it.estado != EstadoOperacion.FINALIZADA }
                             val operacionesOrdenadas = MapUtil.ordenarOperacionesPorRuta(operacionesFiltradas, ubicacionActual)
@@ -161,7 +161,7 @@ class MapFragment : Fragment() {
     }
 
     private fun cargarOperaciones() {
-        operacionRepo.listarOperaciones { operaciones, error ->
+        operacionRepo.listarOperacionesPorUsuario { operaciones, error ->
             if (operaciones != null) {
                 val operacionesFiltradas = operaciones.filter { it.estado != EstadoOperacion.FINALIZADA }
                 mapService?.addOperacionMarkers(
@@ -258,7 +258,7 @@ class MapFragment : Fragment() {
         btnAccion.setOnClickListener {
             when (operacion.estado) {
                 EstadoOperacion.PENDIENTE -> {
-                    operacionRepo.listarOperaciones { operaciones, error ->
+                    operacionRepo.listarOperacionesPorUsuario { operaciones, error ->
                         if (operaciones != null) {
                             val existeEnRuta = operaciones.any { it.estado == EstadoOperacion.EN_RUTA }
                             if (existeEnRuta) {

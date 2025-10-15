@@ -45,7 +45,6 @@ class BienvenidaFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        // 🔹 Inicializar componentes
         tvPendiente = view.findViewById(R.id.tvPendientes)
         tvRealizados = view.findViewById(R.id.tvRealizadas)
         btnPendiente = view.findViewById(R.id.btnPendientes)
@@ -54,33 +53,17 @@ class BienvenidaFragment : Fragment() {
         repository = OperacionRepository(requireContext())
 
         cargarOperaciones()
-
-        btnPendiente.setOnClickListener {
-            val pendientes = listaOperaciones.filter { it.estado != EstadoOperacion.FINALIZADA }
-            Toast.makeText(
-                requireContext(),
-                "Pendientes: ${pendientes.size}",
-                Toast.LENGTH_SHORT
-            ).show()
-        }
-
-        btnRealizadas.setOnClickListener {
-            val realizadas = listaOperaciones.filter { it.estado == EstadoOperacion.FINALIZADA }
-            val intent = Intent(requireContext(), DetalleGestionActivity::class.java)
-            intent.putExtra("GESTIONES_FINALIZADAS", ArrayList(realizadas))
-            startActivity(intent)
-        }
     }
 
     private fun cargarOperaciones() {
-        repository.listarOperaciones { lista, error ->
+        repository.listarOperacionesPorUsuario { lista, error ->
             if (error != null) {
                 Toast.makeText(
                     requireContext(),
                     "Error al obtener operaciones: ${error.message}",
                     Toast.LENGTH_SHORT
                 ).show()
-                return@listarOperaciones
+                return@listarOperacionesPorUsuario
             }
 
             listaOperaciones = lista ?: emptyList()

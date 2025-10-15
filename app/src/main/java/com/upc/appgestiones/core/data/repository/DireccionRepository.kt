@@ -11,7 +11,7 @@ import org.json.JSONObject
 
 class DireccionRepository(private val context: Context) {
 
-    private val baseUrl = "https://plzzgdork5.execute-api.us-east-1.amazonaws.com/Stage1"
+    private val baseUrl = "https://plzzgdork5.execute-api.us-east-1.amazonaws.com/Stage3"
 
     fun updateDireccion(direccion: Direccion, onSuccess: (Direccion) -> Unit, onError: (Exception) -> Unit) {
         val url = "$baseUrl/Direccion"

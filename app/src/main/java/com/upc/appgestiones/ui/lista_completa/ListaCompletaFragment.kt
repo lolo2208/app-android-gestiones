@@ -90,7 +90,7 @@ class ListaCompletaFragment : Fragment() {
 
     private fun cargarGestionesRemotas() {
         swipeRefreshLayout.isRefreshing = true
-        gestionRepo.getGestiones(
+        gestionRepo.listarGestionesPorUsuario(
             onSuccess = { lista ->
                 _gestionesSource = lista
                 cargarGestionesLocal(lista)

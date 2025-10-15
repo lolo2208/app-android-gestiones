@@ -81,13 +81,13 @@ class OperacionesFragment : Fragment() {
 
     private fun cargarOperacionesRemotas() {
         swipeRefreshLayout.isRefreshing = true
-        repository.listarOperaciones { lista, error ->
+        repository.listarOperacionesPorUsuario { lista, error ->
             swipeRefreshLayout.isRefreshing = false
             if (error != null) {
                 txtVacio.text = "Error al cargar datos: ${error.message}"
                 txtVacio.visibility = View.VISIBLE
                 recyclerView.visibility = View.GONE
-                return@listarOperaciones
+                return@listarOperacionesPorUsuario
             }
             _operacionesSrc = lista ?: emptyList()
             _operaciones = _operacionesSrc
