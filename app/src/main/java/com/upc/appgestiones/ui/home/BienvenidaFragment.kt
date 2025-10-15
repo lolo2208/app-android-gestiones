@@ -12,6 +12,8 @@ import android.widget.LinearLayout
 import com.upc.appgestiones.R
 import com.upc.appgestiones.core.data.model.EstadoOperacion
 import android.widget.Toast
+import com.upc.appgestiones.core.data.model.Operacion
+import com.upc.appgestiones.core.data.repository.OperacionRepository
 import com.upc.appgestiones.ui.gestiones.DetalleGestionActivity
 
 // TODO: Rename parameter arguments, choose names that match
@@ -25,69 +27,79 @@ private const val ARG_PARAM2 = "param2"
  * create an instance of this fragment.
  */
 class BienvenidaFragment : Fragment() {
-    private val bienvenidaViewModel : BienvenidaViewModel by activityViewModels()
+    private lateinit var tvPendiente: TextView
+    private lateinit var tvRealizados: TextView
+    private lateinit var btnPendiente: LinearLayout
+    private lateinit var btnRealizadas: LinearLayout
 
-    // TODO: Rename and change types of parameters
-    private var param1: String? = null
-    private var param2: String? = null
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        arguments?.let {
-            param1 = it.getString(ARG_PARAM1)
-            param2 = it.getString(ARG_PARAM2)
-        }
-    }
+    private lateinit var repository: OperacionRepository
+    private var listaOperaciones: List<Operacion> = emptyList()
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        // Inflate the layout for this fragment
         return inflater.inflate(R.layout.fragment_bienvenida, container, false)
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        val tvPendiente = view.findViewById<TextView>(R.id.tvPendientes)
-        val tvRelizados = view.findViewById<TextView>(R.id.tvRealizadas)
+        // 🔹 Inicializar componentes
+        tvPendiente = view.findViewById(R.id.tvPendientes)
+        tvRealizados = view.findViewById(R.id.tvRealizadas)
+        btnPendiente = view.findViewById(R.id.btnPendientes)
+        btnRealizadas = view.findViewById(R.id.btnRealizadas)
 
+        repository = OperacionRepository(requireContext())
 
-        val btnPendiente = view.findViewById<LinearLayout>(R.id.btnPendientes)
-        val btnRealizadas = view.findViewById<LinearLayout>(R.id.btnRealizadas)
+        cargarOperaciones()
 
-        bienvenidaViewModel.operaciones.observe(viewLifecycleOwner) { operaciones ->
-            tvPendiente.text = operaciones.count { it.estado != EstadoOperacion.FINALIZADA }.toString()
-            tvRelizados.text = operaciones.count { it.estado == EstadoOperacion.FINALIZADA }.toString()
-        }
-        //TODO: H011
         btnPendiente.setOnClickListener {
-            Toast.makeText(requireContext(), "Pendientes", Toast.LENGTH_SHORT).show()
-
+            val pendientes = listaOperaciones.filter { it.estado != EstadoOperacion.FINALIZADA }
+            Toast.makeText(
+                requireContext(),
+                "Pendientes: ${pendientes.size}",
+                Toast.LENGTH_SHORT
+            ).show()
         }
+
         btnRealizadas.setOnClickListener {
+            val realizadas = listaOperaciones.filter { it.estado == EstadoOperacion.FINALIZADA }
             val intent = Intent(requireContext(), DetalleGestionActivity::class.java)
+            intent.putExtra("GESTIONES_FINALIZADAS", ArrayList(realizadas))
             startActivity(intent)
         }
     }
 
+    private fun cargarOperaciones() {
+        repository.listarOperaciones { lista, error ->
+            if (error != null) {
+                Toast.makeText(
+                    requireContext(),
+                    "Error al obtener operaciones: ${error.message}",
+                    Toast.LENGTH_SHORT
+                ).show()
+                return@listarOperaciones
+            }
+
+            listaOperaciones = lista ?: emptyList()
+
+            val pendientes = listaOperaciones.count { it.estado != EstadoOperacion.FINALIZADA }
+            val realizadas = listaOperaciones.count { it.estado == EstadoOperacion.FINALIZADA }
+
+            tvPendiente.text = pendientes.toString()
+            tvRealizados.text = realizadas.toString()
+        }
+    }
+
     companion object {
-        /**
-         * Use this factory method to create a new instance of
-         * this fragment using the provided parameters.
-         *
-         * @param param1 Parameter 1.
-         * @param param2 Parameter 2.
-         * @return A new instance of fragment BienvenidaFragment.
-         */
-        // TODO: Rename and change types and number of parameters
         @JvmStatic
         fun newInstance(param1: String, param2: String) =
             BienvenidaFragment().apply {
                 arguments = Bundle().apply {
-                    putString(ARG_PARAM1, param1)
-                    putString(ARG_PARAM2, param2)
+                    putString("param1", param1)
+                    putString("param2", param2)
                 }
             }
     }

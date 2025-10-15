@@ -19,6 +19,7 @@ import com.jakewharton.threetenabp.AndroidThreeTen
 import com.upc.appgestiones.R
 import com.upc.appgestiones.core.audio.AudioRecorderService
 import com.upc.appgestiones.core.data.model.*
+import com.upc.appgestiones.core.data.repository.GestionRepository
 import org.threeten.bp.LocalDateTime
 import java.io.File
 
@@ -61,8 +62,16 @@ class FormularioActivity : AppCompatActivity() {
         containerFormulario = findViewById(R.id.containerFormulario)
         val btnEnviarFormulario: Button = findViewById(R.id.btnEnviarFormulario)
 
-        operacionId = intent.getIntExtra("ID_OPERACION", -1)
-        Log.d("FormularioActivity", "Recibiendo ID de Operación: $operacionId")
+        val operacionJson = intent.getStringExtra("OPERACION_JSON")
+        val operacion = operacionJson?.let { Gson().fromJson(it, Operacion::class.java) }
+
+        if (operacion == null) {
+            Log.e("FormularioActivity", "No se recibió una operación válida")
+            finish()
+            return
+        }
+
+        operacionId = operacion.idOperacion
 
         // Iniciar grabadora de audio
         audioRecorder = AudioRecorderService(this)
@@ -74,10 +83,7 @@ class FormularioActivity : AppCompatActivity() {
             Log.e("FormularioActivity", "No se tienen permisos de grabación")
         }
 
-        // Crear formulario
-        if (operacionId != -1) {
-            val operacion = fetchOperacionById(operacionId)
-
+        if (operacionId > 0) {
             if (operacion != null) {
                 agregarCamposFijos()
 
@@ -91,7 +97,6 @@ class FormularioActivity : AppCompatActivity() {
             }
         }
 
-        // Guardar formulario
         btnEnviarFormulario.setOnClickListener {
             val resultados = mutableMapOf<String, Any?>()
             for ((campo, valor) in respuestas) {
@@ -110,15 +115,29 @@ class FormularioActivity : AppCompatActivity() {
                 audioPath = audioPath
             )
 
-            val gestionJson = Gson().toJson(gestion)
-            val resultIntent = Intent().apply {
-                putExtra("GESTION_JSON", gestionJson)
-            }
-            setResult(RESULT_OK, resultIntent)
-            finish()
+            val gestionRepo = GestionRepository(this)
+            gestionRepo.postGestion(
+                gestion,
+                onSuccess = { gestionCreada ->
+                    Toast.makeText(this, "Gestión enviada correctamente", Toast.LENGTH_SHORT).show()
+
+                    val gestionJson = Gson().toJson(gestionCreada)
+                    val resultIntent = Intent().apply {
+                        putExtra("GESTION_JSON", gestionJson)
+                    }
+                    setResult(RESULT_OK, resultIntent)
+                    finish()
+                },
+                onError = { error ->
+                    Toast.makeText(
+                        this,
+                        "Error al enviar la gestión: ${error.message}",
+                        Toast.LENGTH_LONG
+                    ).show()
+                }
+            )
         }
 
-        // Ajuste de márgenes
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.rootLayout)) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
@@ -126,9 +145,7 @@ class FormularioActivity : AppCompatActivity() {
         }
     }
 
-    // ================= CAMPOS FIJOS =================
     private fun agregarCamposFijos() {
-        // === RESPUESTA DE GESTIÓN ===
         val labelRespuesta = crearLabel("Respuesta de la gestión")
         containerFormulario.addView(labelRespuesta)
 
@@ -172,7 +189,6 @@ class FormularioActivity : AppCompatActivity() {
             }
         }
 
-        // === EVIDENCIA DE GESTIÓN ===
         val labelFoto = crearLabel("Evidencia de gestión")
         containerFormulario.addView(labelFoto)
 
@@ -207,7 +223,6 @@ class FormularioActivity : AppCompatActivity() {
             takePictureLauncher.launch(uri)
         }
 
-        // === OBSERVACIÓN ===
         val labelObservacion = crearLabel("Observación de la gestión")
         containerFormulario.addView(labelObservacion)
 
@@ -237,7 +252,6 @@ class FormularioActivity : AppCompatActivity() {
         respuestas["observacion_gestion"] = editTextObs
     }
 
-    // ================= CAMPOS DINÁMICOS =================
     private fun crearCamposDinamicos(campos: List<CampoFormulario>) {
         for (campo in campos) {
             val label = crearLabel(campo.etiqueta)
@@ -397,10 +411,6 @@ class FormularioActivity : AppCompatActivity() {
             observacion = respuestasFormulario["observacion_gestion"]?.toString() ?: "",
             operacionNavigation = null
         )
-    }
-
-    private fun fetchOperacionById(id: Int): Operacion? {
-        return Operacion.fetchOperaciones().find { it.idOperacion == id }
     }
 
     override fun onDestroy() {

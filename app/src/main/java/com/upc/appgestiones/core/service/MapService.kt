@@ -6,6 +6,7 @@ import android.graphics.*
 import android.graphics.drawable.BitmapDrawable
 import android.location.Location
 import android.util.Log
+import android.widget.Toast
 import androidx.annotation.ColorRes
 import androidx.core.content.ContextCompat
 import com.android.volley.Request
@@ -16,6 +17,7 @@ import com.google.android.gms.location.*
 import com.upc.appgestiones.R
 import com.upc.appgestiones.core.data.model.EstadoOperacion
 import com.upc.appgestiones.core.data.model.Operacion
+import com.upc.appgestiones.core.data.repository.DireccionRepository
 import com.upc.appgestiones.core.utils.DateUtil
 import com.upc.appgestiones.ui.map.MapViewModel
 import org.json.JSONObject
@@ -145,25 +147,68 @@ class MapService(private val context: Context, private val mapView: MapView) {
     @SuppressLint("MissingPermission")
     fun updateOperacionWithCurrentLocation(
         operacion: Operacion,
+        context: Context,
         onSuccess: (Operacion) -> Unit,
         onFailure: (Exception) -> Unit
     ) {
         fusedLocationClient.lastLocation
             .addOnSuccessListener { location: Location? ->
                 if (location != null) {
+
                     val nuevaDireccion = operacion.direccionNavigation.copy(
                         latitud = location.latitude,
                         longitud = location.longitude
                     )
-                    val operacionActualizada = operacion.copy(direccionNavigation = nuevaDireccion)
 
-                    onSuccess(operacionActualizada)
+                    val direccionRepository = DireccionRepository(context)
+                    direccionRepository.updateDireccion(
+                        direccion = nuevaDireccion,
+                        onSuccess = { direccionActualizada ->
+                            val operacionActualizada = operacion.copy(direccionNavigation = direccionActualizada)
+                            onSuccess(operacionActualizada)
+                        },
+                        onError = { e ->
+                            onFailure(e)
+                        }
+                    )
                 } else {
                     onFailure(Exception("No se pudo obtener la ubicación actual"))
                 }
             }
             .addOnFailureListener { exception ->
                 onFailure(exception)
+            }
+    }
+
+
+    @SuppressLint("MissingPermission")
+    fun updateOperacionWithCurrentLocation(
+        operacion: Operacion,
+        direccionRepo: DireccionRepository,
+        onSuccess: (Operacion) -> Unit,
+        onFailure: (Exception) -> Unit
+    ) {
+        fusedLocationClient.lastLocation
+            .addOnSuccessListener { location ->
+                if (location != null) {
+                    val nuevaDireccion = operacion.direccionNavigation.copy(
+                        latitud = location.latitude,
+                        longitud = location.longitude
+                    )
+                    direccionRepo.updateDireccion(
+                        nuevaDireccion,
+                        onSuccess = {
+                            val operacionActualizada = operacion.copy(direccionNavigation = nuevaDireccion)
+                            onSuccess(operacionActualizada)
+                        },
+                        onError = { e -> onFailure(e) }
+                    )
+                } else {
+                    onFailure(Exception("No se pudo obtener la ubicación actual"))
+                }
+            }
+            .addOnFailureListener { e ->
+                onFailure(e)
             }
     }
 

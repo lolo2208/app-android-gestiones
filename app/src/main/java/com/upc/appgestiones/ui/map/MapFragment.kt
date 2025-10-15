@@ -20,6 +20,8 @@ import com.upc.appgestiones.R
 import com.upc.appgestiones.core.data.model.EstadoOperacion
 import com.upc.appgestiones.core.data.model.Gestion
 import com.upc.appgestiones.core.data.model.Operacion
+import com.upc.appgestiones.core.data.repository.DireccionRepository
+import com.upc.appgestiones.core.data.repository.OperacionRepository
 import com.upc.appgestiones.core.services.MapService
 import com.upc.appgestiones.core.utils.DateUtil
 import com.upc.appgestiones.core.utils.MapUtil
@@ -44,32 +46,16 @@ private const val ARG_PARAM2 = "param2"
  * create an instance of this fragment.
  */
 class MapFragment : Fragment() {
-    private val mapViewModel: MapViewModel by activityViewModels()
-    private val operacionViewmodel: OperacionViewmodel by activityViewModels()
-    private val bienvenidaViewModel: BienvenidaViewModel by activityViewModels()
     private var mapView: MapView? = null
     private var mapService: MapService? = null
+    private val operacionRepo by lazy { OperacionRepository(requireContext()) }
+    private val direccionRepo by lazy { DireccionRepository(requireContext()) }
 
     private val formularioLauncher = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
     ) { result ->
         if (result.resultCode == Activity.RESULT_OK) {
-            val data: Intent? = result.data
-            val gestionJson = data?.getStringExtra("GESTION_JSON")
-
-            gestionJson?.let {
-                val gestion = Gson().fromJson(it, Gestion::class.java)
-                val listaActual = mapViewModel.manejarGestion(gestion)
-                bienvenidaViewModel.setOperaciones(listaActual)
-                operacionViewmodel.setOperaciones(listaActual)
-
-                val operacionFinalizada = listaActual.find { op -> op.idOperacion == gestion.idOperacion }
-                if(operacionFinalizada != null) {
-                    val gestionActualizada = gestion.copy(
-                        operacionNavigation = operacionFinalizada!!
-                    )
-                }
-            }
+            cargarOperaciones()
         }
     }
 
@@ -105,60 +91,46 @@ class MapFragment : Fragment() {
 
         mapService = MapService(requireContext(), mapView!!)
 
-        // Observa operaciones y crea marcadores
-        mapViewModel.operaciones.observe(viewLifecycleOwner) { lista ->
-            val listaOperaciones = lista.filter { operacion ->
-                operacion.estado != EstadoOperacion.FINALIZADA
-            }
-            mapService?.addOperacionMarkers(
-                listaOperaciones,
-                onMarkerClick = { operacion ->
-                    mapView!!.controller.setCenter(GeoPoint(operacion.direccionNavigation.latitud ?: 0.0, operacion.direccionNavigation.longitud ?: 0.0))
-                    showOperacionBottomSheet(operacion)
-                },
-                onGeoClick = { operacion ->
-                    actualizarOperacionEnViewModel(operacion, mapViewModel)
-                }
-            )
-        }
-
-        // Observa ubicación y mueve el mapa
-        mapViewModel.miUbicacion.observe(viewLifecycleOwner) { point ->
-            //mapView!!.controller.setCenter(point)
-        }
-
         // Obtener ubicación actual
         mapService?.getCurrentLocation(
-            onSuccess = { geoPoint -> mapViewModel.setUbicacion(geoPoint) },
+            onSuccess = { geoPoint ->
+                mapView!!.controller.setCenter(geoPoint)
+            },
             onFailure = { e -> println("Error ubicación: ${e.message}") }
         )
 
         // Iniciar actualizaciones en tiempo real
         mapService?.startLocationUpdates { geoPoint ->
-            mapViewModel.setUbicacion(geoPoint)
+            // Opcional: actualizar centro de mapa en tiempo real
         }
+
+        // Cargar operaciones y crear marcadores
+        cargarOperaciones()
 
         val btnRuta = view.findViewById<Button>(R.id.btnRuta)
         btnRuta.setOnClickListener {
             mapService?.getCurrentLocation(
                 onSuccess = { ubicacionActual ->
-                    val operacionesOrdenadas = MapUtil.ordenarOperacionesPorRuta(
-                        mapViewModel.operaciones.value ?: emptyList(),
-                        ubicacionActual
-                    )
-                    mapViewModel.setOperaciones(operacionesOrdenadas)
+                    operacionRepo.listarOperaciones { operaciones, error ->
+                        if (operaciones != null) {
+                            val operacionesFiltradas = operaciones.filter { it.estado != EstadoOperacion.FINALIZADA }
+                            val operacionesOrdenadas = MapUtil.ordenarOperacionesPorRuta(operacionesFiltradas, ubicacionActual)
 
-                    val puntos: MutableList<GeoPoint> = mutableListOf()
-                    puntos.add(ubicacionActual)
-                    operacionesOrdenadas.forEach { operacion ->
-                        val lat = operacion.direccionNavigation.latitud
-                        val lon = operacion.direccionNavigation.longitud
-                        if (lat != null && lon != null) {
-                            puntos.add(GeoPoint(lat, lon))
+                            val puntos: MutableList<GeoPoint> = mutableListOf()
+                            puntos.add(ubicacionActual)
+                            operacionesOrdenadas.forEach { operacion ->
+                                val lat = operacion.direccionNavigation.latitud
+                                val lon = operacion.direccionNavigation.longitud
+                                if (lat != null && lon != null) {
+                                    puntos.add(GeoPoint(lat, lon))
+                                }
+                            }
+
+                            mapService?.drawRutaOptima(puntos)
+                        } else if (error != null) {
+                            Toast.makeText(context, "Error al listar operaciones: ${error.message}", Toast.LENGTH_SHORT).show()
                         }
                     }
-
-                    mapService?.drawRutaOptima(puntos)
                 },
                 onFailure = { e ->
                     Toast.makeText(context, "No se pudo obtener la ubicación: ${e.message}", Toast.LENGTH_SHORT).show()
@@ -186,6 +158,41 @@ class MapFragment : Fragment() {
                     putString(ARG_PARAM2, param2)
                 }
             }
+    }
+
+    private fun cargarOperaciones() {
+        operacionRepo.listarOperaciones { operaciones, error ->
+            if (operaciones != null) {
+                val operacionesFiltradas = operaciones.filter { it.estado != EstadoOperacion.FINALIZADA }
+                mapService?.addOperacionMarkers(
+                    operacionesFiltradas,
+                    onMarkerClick = { operacion ->
+                        mapView!!.controller.setCenter(
+                            GeoPoint(
+                                operacion.direccionNavigation.latitud ?: 0.0,
+                                operacion.direccionNavigation.longitud ?: 0.0
+                            )
+                        )
+                        showOperacionBottomSheet(operacion)
+                    },
+                    onGeoClick = { operacion ->
+                        mapService?.updateOperacionWithCurrentLocation(
+                            operacion,
+                            direccionRepo,
+                            onSuccess = { operacionActualizada ->
+                                Toast.makeText(context, "Ubicación actualizada correctamente", Toast.LENGTH_SHORT).show()
+                                cargarOperaciones()
+                            },
+                            onFailure = { e ->
+                                Toast.makeText(context, "Error al actualizar ubicación: ${e.message}", Toast.LENGTH_SHORT).show()
+                            }
+                        )
+                    }
+                )
+            } else if (error != null) {
+                Toast.makeText(context, "Error al listar operaciones: ${error.message}", Toast.LENGTH_SHORT).show()
+            }
+        }
     }
 
     private fun showOperacionBottomSheet(operacion: Operacion) {
@@ -251,38 +258,69 @@ class MapFragment : Fragment() {
         btnAccion.setOnClickListener {
             when (operacion.estado) {
                 EstadoOperacion.PENDIENTE -> {
-                    val operacionesActuales = operacionViewmodel.operaciones.value
-                    if(operacionesActuales?.any { operacion -> operacion.estado == EstadoOperacion.EN_RUTA }
-                            ?: true) {
-                        Toast.makeText(requireContext(), "Ya existe una operación en ruta", Toast.LENGTH_SHORT).show()
-                    }else {
-                        Toast.makeText(requireContext(), "La operación ${operacion.asunto} está en camino", Toast.LENGTH_SHORT).show()
-                        val operacionActualizada = operacion.copy(estado = EstadoOperacion.EN_RUTA)
-                        actualizarOperacionEnViewModel(operacionActualizada, mapViewModel)
-                        bottomSheet.dismiss()
+                    operacionRepo.listarOperaciones { operaciones, error ->
+                        if (operaciones != null) {
+                            val existeEnRuta = operaciones.any { it.estado == EstadoOperacion.EN_RUTA }
+                            if (existeEnRuta) {
+                                Toast.makeText(
+                                    requireContext(),
+                                    "Ya existe una operación en ruta. Finalízala antes de iniciar otra.",
+                                    Toast.LENGTH_LONG
+                                ).show()
+                            } else {
+                                val repo = OperacionRepository(requireContext())
+                                val operacionActualizada = operacion.copy(estado = EstadoOperacion.EN_RUTA)
+                                repo.updateOperacion(
+                                    operacionActualizada,
+                                    onSuccess = {
+                                        Toast.makeText(
+                                            requireContext(),
+                                            "La operación ${operacion.asunto} está en camino",
+                                            Toast.LENGTH_SHORT
+                                        ).show()
+                                        cargarOperaciones()
+                                        bottomSheet.dismiss()
+                                    },
+                                    onError = { e ->
+                                        Toast.makeText(
+                                            requireContext(),
+                                            "Error al actualizar operación: ${e.message}",
+                                            Toast.LENGTH_SHORT
+                                        ).show()
+                                    }
+                                )
+                            }
+                        } else if (error != null) {
+                            Toast.makeText(
+                                requireContext(),
+                                "Error al verificar operaciones: ${error.message}",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        }
                     }
-
                 }
                 EstadoOperacion.EN_RUTA -> {
                     val intent = Intent(requireContext(), FormularioActivity::class.java)
-                    Log.d("MapFragment", "ID operacion = ${operacion.idOperacion}")
-                    intent.putExtra("ID_OPERACION", operacion.idOperacion)
+                    val operacionJson = Gson().toJson(operacion)
+                    intent.putExtra("OPERACION_JSON", operacionJson)
                     formularioLauncher.launch(intent)
+                    bottomSheet.dismiss()
                 }
                 else -> {
                     Toast.makeText(requireContext(), "Detalle de ${operacion.asunto}", Toast.LENGTH_SHORT).show()
+                    bottomSheet.dismiss()
                 }
             }
-
-            bottomSheet.dismiss()
         }
 
         btnGeo.setOnClickListener {
             mapService?.updateOperacionWithCurrentLocation(
-                operacion,
+                operacion = operacion,
+                direccionRepo = direccionRepo,
                 onSuccess = { operacionActualizada ->
-                    actualizarOperacionEnViewModel(operacionActualizada, mapViewModel)
+                    bottomSheet.dismiss()
                     Toast.makeText(context, "Ubicación actualizada correctamente", Toast.LENGTH_SHORT).show()
+                    cargarOperaciones()
                 },
                 onFailure = { e ->
                     Toast.makeText(context, "Error al actualizar ubicación: ${e.message}", Toast.LENGTH_SHORT).show()
@@ -290,18 +328,9 @@ class MapFragment : Fragment() {
             )
         }
 
+
         bottomSheet.setContentView(view)
         bottomSheet.show()
-    }
-
-    private fun actualizarOperacionEnViewModel(operacionActualizada: Operacion, mapViewModel: MapViewModel) {
-        val listaActual = mapViewModel.operaciones.value ?: emptyList()
-        val listaActualizada = listaActual.map {
-            if (it.idOperacion == operacionActualizada.idOperacion) operacionActualizada else it
-        }
-        mapViewModel.setOperaciones(listaActualizada)
-        bienvenidaViewModel.setOperaciones(listaActualizada)
-        operacionViewmodel.setOperaciones(listaActualizada)
     }
 
     override fun onDestroyView() {

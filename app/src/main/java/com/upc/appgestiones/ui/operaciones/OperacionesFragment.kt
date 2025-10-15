@@ -15,6 +15,7 @@ import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import com.google.android.material.textfield.TextInputEditText
 import com.upc.appgestiones.R
 import com.upc.appgestiones.core.data.model.Operacion
+import com.upc.appgestiones.core.data.repository.OperacionRepository
 
 class OperacionesFragment : Fragment() {
 
@@ -25,7 +26,10 @@ class OperacionesFragment : Fragment() {
     private var _operaciones: List<Operacion> = emptyList()
     private var _operacionesSrc: List<Operacion> = emptyList()
 
+    private lateinit var edtBuscar: TextInputEditText
+    private lateinit var repository: OperacionRepository
     private val operacionViewmodel: OperacionViewmodel by activityViewModels()
+
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -34,11 +38,14 @@ class OperacionesFragment : Fragment() {
     ): View? {
         val view = inflater.inflate(R.layout.fragment_operaciones, container, false)
 
+        repository = OperacionRepository(requireContext())
+
         recyclerView = view.findViewById(R.id.recyclerOperaciones)
         swipeRefreshLayout = view.findViewById(R.id.swipeRefresh)
         txtVacio = view.findViewById(R.id.txtVacio)
+        edtBuscar = view.findViewById(R.id.edtBuscar)
 
-        //Iniciar recycler view
+        // Configurar RecyclerView
         recyclerView.layoutManager = LinearLayoutManager(requireContext())
         adapter = OperacionesAdapter(emptyList()) { operacion ->
             parentFragmentManager.beginTransaction()
@@ -48,46 +55,47 @@ class OperacionesFragment : Fragment() {
         }
         recyclerView.adapter = adapter
 
-        //Accion Swipe
+        // Acción Swipe: recargar datos remotos
         swipeRefreshLayout.setOnRefreshListener {
-            operacionViewmodel.refreshOperaciones()
-            _operacionesSrc = operacionViewmodel.operaciones.value ?: emptyList()
-            _operaciones = _operacionesSrc
-            cargarOperaciones(_operaciones)
+            cargarOperacionesRemotas()
         }
 
-        //Observar cambios de las operaciones en viewmodel
-        operacionViewmodel.operaciones.observe(viewLifecycleOwner) { operaciones ->
-            _operacionesSrc = operaciones
-            _operaciones = _operacionesSrc
-            cargarOperaciones(_operaciones)
-        }
-
-        //Accion del buscador
-        val edtBuscar: TextInputEditText = view.findViewById(R.id.edtBuscar);
+        // Accion del buscador
         edtBuscar.addTextChangedListener(object : TextWatcher {
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
-
+            override fun afterTextChanged(s: Editable?) {}
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
                 val texto = s.toString().trim()
                 _operaciones = _operacionesSrc.filter { operacion ->
-                    val nombreCliente:String = buildString {
-                        append(operacion.clienteNavigation.nombres)
-                        append(" ")
-                        append(operacion.clienteNavigation.apellidos)
-                    }
+                    val nombreCliente = "${operacion.clienteNavigation.nombres} ${operacion.clienteNavigation.apellidos}"
                     nombreCliente.contains(texto, ignoreCase = true)
                 }
-                cargarOperaciones(_operaciones)
+                cargarOperacionesLocal(_operaciones)
             }
-
-            override fun afterTextChanged(s: Editable?) {}
         })
+
+        // Cargar por primera vez
+        cargarOperacionesRemotas()
         return view
     }
 
-    //Llenar recyclerview
-    private fun cargarOperaciones(lista: List<Operacion>) {
+    private fun cargarOperacionesRemotas() {
+        swipeRefreshLayout.isRefreshing = true
+        repository.listarOperaciones { lista, error ->
+            swipeRefreshLayout.isRefreshing = false
+            if (error != null) {
+                txtVacio.text = "Error al cargar datos: ${error.message}"
+                txtVacio.visibility = View.VISIBLE
+                recyclerView.visibility = View.GONE
+                return@listarOperaciones
+            }
+            _operacionesSrc = lista ?: emptyList()
+            _operaciones = _operacionesSrc
+            cargarOperacionesLocal(_operaciones)
+        }
+    }
+
+    private fun cargarOperacionesLocal(lista: List<Operacion>) {
         if (lista.isEmpty()) {
             txtVacio.visibility = View.VISIBLE
             recyclerView.visibility = View.GONE
@@ -96,6 +104,5 @@ class OperacionesFragment : Fragment() {
             recyclerView.visibility = View.VISIBLE
             adapter.actualizar(lista)
         }
-        swipeRefreshLayout.isRefreshing = false
     }
 }

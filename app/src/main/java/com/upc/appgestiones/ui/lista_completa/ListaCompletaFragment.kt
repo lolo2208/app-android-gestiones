@@ -15,6 +15,7 @@ import com.google.android.material.textfield.TextInputEditText
 import com.upc.appgestiones.R
 import com.upc.appgestiones.core.data.model.Gestion
 import com.upc.appgestiones.core.data.model.Operacion
+import com.upc.appgestiones.core.data.repository.GestionRepository
 import com.upc.appgestiones.ui.gestiones.DetalleGestionActivity
 import com.upc.appgestiones.ui.gestiones.DetalleGestionFragment
 import com.upc.appgestiones.ui.gestiones.GestionesAdapter
@@ -26,10 +27,12 @@ class ListaCompletaFragment : Fragment() {
     private lateinit var adapter: GestionesAdapter
     private lateinit var swipeRefreshLayout: SwipeRefreshLayout
     private lateinit var txtVacio: TextView
+    private lateinit var edtBuscar: TextInputEditText
 
     private var _gestiones: List<Gestion> = emptyList()
-
     private var _gestionesSource: List<Gestion> = emptyList()
+
+    private lateinit var gestionRepo: GestionRepository
 
 
     override fun onCreateView(
@@ -42,45 +45,66 @@ class ListaCompletaFragment : Fragment() {
         recyclerView = view.findViewById(R.id.recyclerGestiones)
         swipeRefreshLayout = view.findViewById(R.id.swipeRefresh)
         txtVacio = view.findViewById(R.id.txtVacio)
+        edtBuscar = view.findViewById(R.id.edtBuscarGestion)
 
         recyclerView.layoutManager =
             androidx.recyclerview.widget.LinearLayoutManager(requireContext())
+
         adapter = GestionesAdapter(emptyList()) { gestion ->
-            parentFragmentManager.beginTransaction().replace(R.id.frameLayout,
-                DetalleGestionFragment.newInstance(gestion))
+            parentFragmentManager.beginTransaction()
+                .replace(R.id.frameLayout, DetalleGestionFragment.newInstance(gestion))
                 .addToBackStack(null)
                 .commit()
         }
         recyclerView.adapter = adapter
 
-        _gestionesSource = Gestion.fetchGestionesFinalizadas()
+        gestionRepo = GestionRepository(requireContext())
 
-        cargarGestiones(Gestion.fetchGestionesFinalizadas())
+        cargarGestionesRemotas()
 
-        //Accion del buscador
-        val edtBuscar: TextInputEditText = view.findViewById(R.id.edtBuscarGestion);
+        swipeRefreshLayout.setOnRefreshListener {
+            cargarGestionesRemotas()
+        }
+
         edtBuscar.addTextChangedListener(object : TextWatcher {
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun afterTextChanged(s: Editable?) {}
 
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
                 val texto = s.toString().trim()
                 _gestiones = _gestionesSource.filter { gestion ->
-                    val nombreCliente:String = buildString {
-                        append(gestion.operacionNavigation!!.clienteNavigation.nombres)
+                    val nombreCliente = buildString {
+                        append(gestion.operacionNavigation?.clienteNavigation?.nombres ?: "")
                         append(" ")
-                        append(gestion.operacionNavigation!!.clienteNavigation.apellidos)
+                        append(gestion.operacionNavigation?.clienteNavigation?.apellidos ?: "")
                     }
                     nombreCliente.contains(texto, ignoreCase = true)
                 }
-                cargarGestiones(_gestiones)
+                cargarGestionesLocal(_gestiones)
             }
-
-            override fun afterTextChanged(s: Editable?) {}
         })
 
         return view
     }
-    private fun cargarGestiones(lista:List<Gestion>) {
+
+
+    private fun cargarGestionesRemotas() {
+        swipeRefreshLayout.isRefreshing = true
+        gestionRepo.getGestiones(
+            onSuccess = { lista ->
+                _gestionesSource = lista
+                cargarGestionesLocal(lista)
+            },
+            onError = { e ->
+                swipeRefreshLayout.isRefreshing = false
+                txtVacio.text = "Error al cargar gestiones: ${e.message}"
+                txtVacio.visibility = View.VISIBLE
+                recyclerView.visibility = View.GONE
+            }
+        )
+    }
+
+    private fun cargarGestionesLocal(lista: List<Gestion>) {
         if (lista.isEmpty()) {
             txtVacio.visibility = View.VISIBLE
             recyclerView.visibility = View.GONE
