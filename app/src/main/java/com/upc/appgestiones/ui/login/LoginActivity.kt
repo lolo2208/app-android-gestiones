@@ -14,6 +14,9 @@ import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
 import com.upc.appgestiones.R
 import com.upc.appgestiones.ui.home.HomeActivity
+import okhttp3.*
+import org.json.JSONObject
+import java.io.IOException
 
 class LoginActivity : AppCompatActivity() {
 
@@ -22,6 +25,9 @@ class LoginActivity : AppCompatActivity() {
     private lateinit var edtUsuario: TextInputEditText
     private lateinit var edtPassword: TextInputEditText
     private lateinit var btnAcceder: Button
+
+
+    private val apiUrl = "https://zwgxy2kgo4.execute-api.us-east-1.amazonaws.com/v1/login"
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -66,13 +72,40 @@ class LoginActivity : AppCompatActivity() {
         val user = edtUsuario.text.toString().trim()
         val pass = edtPassword.text.toString().trim()
 
-        if (user == "admin@isolutions.com" && pass == "1234") {
-            val intent = Intent(this, HomeActivity::class.java)
-            startActivity(intent)
-            finish()
-        } else {
-            tilPassword.error = "Contraseña errónea, por favor revisar el usuario o contraseña"
-        }
+        val urlWithParams = "$apiUrl?username=$user&password=$pass"
+
+        val client = OkHttpClient()
+        val request = Request.Builder()
+            .url(urlWithParams)
+            .get()
+            .build()
+
+        client.newCall(request).enqueue(object : Callback {
+            override fun onFailure(call: Call, e: IOException) {
+                runOnUiThread {
+                    tilPassword.error = "Error de conexión: ${e.message}"
+                }
+            }
+
+            override fun onResponse(call: Call, response: Response) {
+                val body = response.body?.string()
+                runOnUiThread {
+                    if (response.isSuccessful && body != null) {
+                        val json = JSONObject(body)
+                        if (json.has("usuario")) {
+
+                            val intent = Intent(this@LoginActivity, HomeActivity::class.java)
+                            startActivity(intent)
+                            finish()
+                        } else {
+                            tilPassword.error = json.optString("message", "Credenciales inválidas")
+                        }
+                    } else {
+                        tilPassword.error = "Error interno del servidor"
+                    }
+                }
+            }
+        })
     }
 
     fun goToHome(view: View) {
