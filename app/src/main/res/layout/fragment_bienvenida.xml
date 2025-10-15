@@ -9,8 +9,8 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:gravity="start"
-        android:orientation="vertical">
+        android:orientation="vertical"
+        android:gravity="start">
 
         <com.google.android.material.appbar.MaterialToolbar
             android:id="@+id/toolbar"
@@ -22,34 +22,36 @@
 
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:gravity="start"
+            android:layout_height="0dp"
+            android:layout_weight="1"
             android:orientation="vertical"
-            android:padding="16dp">
+            android:padding="16dp"
+            android:gravity="top">
 
             <TextView
                 android:id="@+id/txtWelcome"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:textAlignment="center"
-                android:textSize="32dp"
                 android:text="Resumen del día"
-                android:layout_marginBottom="32dp"
-                android:textStyle="bold" />
+                android:textAlignment="center"
+                android:textSize="32sp"
+                android:textStyle="bold"
+                android:layout_gravity="center_horizontal"
+                android:layout_marginBottom="32dp" />
 
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="200dp"
+                android:layout_marginBottom="16dp"
                 app:cardCornerRadius="16dp"
-                app:cardElevation="6dp"
-                android:layout_marginBottom="16dp">
+                app:cardElevation="6dp">
 
                 <LinearLayout
                     android:id="@+id/btnPendientes"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
-                    android:gravity="center"
                     android:orientation="vertical"
+                    android:gravity="center"
                     android:padding="16dp"
                     android:clickable="true"
                     android:focusable="true"
@@ -60,7 +62,7 @@
                         android:layout_height="wrap_content"
                         android:text="Gestiones Pendientes"
                         android:gravity="center"
-                        android:textSize="32dp"
+                        android:textSize="32sp"
                         android:textStyle="bold"
                         android:textColor="@color/custom_orange" />
 
@@ -72,7 +74,6 @@
                         android:textSize="64sp"
                         android:textStyle="bold"
                         android:layout_marginTop="8dp" />
-
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
@@ -86,8 +87,8 @@
                     android:id="@+id/btnRealizadas"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
-                    android:gravity="center"
                     android:orientation="vertical"
+                    android:gravity="center"
                     android:padding="16dp"
                     android:clickable="true"
                     android:focusable="true"
@@ -98,22 +99,41 @@
                         android:layout_height="wrap_content"
                         android:text="Gestiones Realizadas"
                         android:textColor="@color/custom_green"
-                        android:textSize="32dp"
+                        android:textSize="32sp"
                         android:textStyle="bold" />
 
                     <TextView
                         android:id="@+id/tvRealizadas"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="8dp"
                         android:text="0"
+                        android:layout_marginTop="8dp"
                         android:textSize="64sp"
                         android:textStyle="bold" />
-
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
-        </LinearLayout>
+            <!-- Espacio flexible para empujar el botón al final -->
+            <Space
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1" />
 
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnLogout"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Cerrar sesión"
+                android:textAllCaps="false"
+                android:textStyle="bold"
+                android:layout_marginTop="8dp"
+                android:layout_marginBottom="16dp"
+                android:backgroundTint="@color/custom_red"
+                android:textColor="@android:color/white"
+                app:cornerRadius="12dp"
+                app:icon="@drawable/ic_logout"
+                app:iconGravity="textStart"
+                app:iconPadding="8dp" />
+        </LinearLayout>
     </LinearLayout>
 </FrameLayout>

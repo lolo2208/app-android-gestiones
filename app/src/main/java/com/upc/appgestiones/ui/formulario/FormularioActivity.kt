@@ -21,6 +21,7 @@ import com.upc.appgestiones.core.audio.AudioRecorderService
 import com.upc.appgestiones.core.data.model.*
 import com.upc.appgestiones.core.data.repository.DetalleCatalogoRepository
 import com.upc.appgestiones.core.data.repository.GestionRepository
+import com.upc.appgestiones.core.sqlite.dao.RespaldoDAO
 import org.threeten.bp.LocalDateTime
 import java.io.File
 
@@ -41,6 +42,8 @@ class FormularioActivity : AppCompatActivity() {
     private lateinit var detalleCatalogoRepo: DetalleCatalogoRepository
 
     private var listaDetallesCatalogo: List<DetalleCatalogo> = emptyList()
+
+    private lateinit var respaldoDAO: RespaldoDAO
 
     private val takePictureLauncher =
         registerForActivityResult(ActivityResultContracts.TakePicture()) { success ->
@@ -69,6 +72,8 @@ class FormularioActivity : AppCompatActivity() {
 
         detalleCatalogoRepo = DetalleCatalogoRepository(this)
 
+        respaldoDAO = RespaldoDAO(this)
+
         val operacionJson = intent.getStringExtra("OPERACION_JSON")
         val operacion = operacionJson?.let { Gson().fromJson(it, Operacion::class.java) }
 
@@ -94,7 +99,6 @@ class FormularioActivity : AppCompatActivity() {
             detalleCatalogoRepo.getDetalleCatalogos(
                 onSuccess = { detalles ->
                     listaDetallesCatalogo = detalles
-                    agregarCamposFijos()
 
                     if (operacion != null) {
                         agregarCamposFijos()
@@ -132,6 +136,24 @@ class FormularioActivity : AppCompatActivity() {
                 respuestasFormulario = resultados,
                 audioPath = audioPath
             )
+
+            try {
+                if (!audioPath.isNullOrEmpty()) {
+                    respaldoDAO.insertar(operacionId, "audio_gestion", audioPath!!)
+                    Log.d("FormularioActivity", "Audio respaldado en SQLite: $audioPath")
+                }
+
+                val fotoEvidencia = resultados["foto_evidencia_gestion"]?.toString()
+                if (!fotoEvidencia.isNullOrEmpty()) {
+                    respaldoDAO.insertar(operacionId, "foto_evidencia_gestion", fotoEvidencia)
+                    Log.d("FormularioActivity", "Foto respaldada en SQLite: $fotoEvidencia")
+                }
+
+                Toast.makeText(this, "Evidencias guardadas localmente", Toast.LENGTH_SHORT).show()
+            } catch (e: Exception) {
+                Log.e("FormularioActivity", "Error al guardar respaldo local: ${e.message}")
+            }
+
 
             val gestionRepo = GestionRepository(this)
             gestionRepo.postGestion(

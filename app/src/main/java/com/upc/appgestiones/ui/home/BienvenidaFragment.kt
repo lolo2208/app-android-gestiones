@@ -1,5 +1,6 @@
 package com.upc.appgestiones.ui.home
 
+import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import androidx.fragment.app.Fragment
@@ -12,9 +13,11 @@ import android.widget.LinearLayout
 import com.upc.appgestiones.R
 import com.upc.appgestiones.core.data.model.EstadoOperacion
 import android.widget.Toast
+import com.google.android.material.button.MaterialButton
 import com.upc.appgestiones.core.data.model.Operacion
 import com.upc.appgestiones.core.data.repository.OperacionRepository
 import com.upc.appgestiones.ui.gestiones.DetalleGestionActivity
+import com.upc.appgestiones.ui.login.LoginActivity
 
 // TODO: Rename parameter arguments, choose names that match
 // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
@@ -35,6 +38,8 @@ class BienvenidaFragment : Fragment() {
     private lateinit var repository: OperacionRepository
     private var listaOperaciones: List<Operacion> = emptyList()
 
+    private lateinit var btnLogout: MaterialButton
+
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
@@ -49,8 +54,20 @@ class BienvenidaFragment : Fragment() {
         tvRealizados = view.findViewById(R.id.tvRealizadas)
         btnPendiente = view.findViewById(R.id.btnPendientes)
         btnRealizadas = view.findViewById(R.id.btnRealizadas)
+        btnLogout = view.findViewById(R.id.btnLogout)
 
         repository = OperacionRepository(requireContext())
+
+        btnLogout.setOnClickListener {
+            val prefs = requireContext().getSharedPreferences("AppGestionesPrefs", Context.MODE_PRIVATE)
+            prefs.edit().clear().apply()
+
+            Toast.makeText(requireContext(), "Sesión cerrada correctamente", Toast.LENGTH_SHORT).show()
+
+            val intent = Intent(requireContext(), LoginActivity::class.java)
+            intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+            startActivity(intent)
+        }
 
         cargarOperaciones()
     }
